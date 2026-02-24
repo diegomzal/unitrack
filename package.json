@@ -1,0 +1,31 @@
+{
+  "name": "unitrack",
+  "version": "1.0.0",
+  "description": "UniTrack es una aplicación integral diseñada para que los estudiantes universitarios puedan organizar su vida académica. Permite realizar un seguimiento estructurado de materias, horarios, calificaciones, tareas y el progreso general en la carrera, facilitando la gestión del tiempo y la proyección académica.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/diegomzal/unitrack.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/diegomzal/unitrack/issues"
+  },
+  "homepage": "https://github.com/diegomzal/unitrack#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
