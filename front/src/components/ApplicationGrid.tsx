@@ -6,9 +6,10 @@ interface ApplicationGridProps {
     applications: Application[];
     onEdit: (app: Application) => void;
     onDelete: (id: string) => void;
+    onOpenDetails: (app: Application) => void;
 }
 
-export default function ApplicationGrid({ applications, onEdit, onDelete }: ApplicationGridProps) {
+export default function ApplicationGrid({ applications, onEdit, onDelete, onOpenDetails }: ApplicationGridProps) {
     const muiTheme = useTheme();
     const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
 
@@ -20,6 +21,7 @@ export default function ApplicationGrid({ applications, onEdit, onDelete }: Appl
                     application={app}
                     onEdit={onEdit}
                     onDelete={onDelete}
+                    onOpenDetails={onOpenDetails}
                 />
             ))}
         </Box>

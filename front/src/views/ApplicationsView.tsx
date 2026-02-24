@@ -12,10 +12,12 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import SortIcon from '@mui/icons-material/Sort';
 
 import { useApplications } from '../hooks/useApplications';
 import { APPLICATION_STATUSES, type Application, type ApplicationFormData } from '../types/application';
 import ApplicationFormDialog from '../components/ApplicationFormDialog';
+import ApplicationDetailsDialog from '../components/ApplicationDetailsDialog';
 import ConfirmDeleteDialog from '../components/ConfirmDeleteDialog';
 import EmptyState from '../components/EmptyState';
 import { useSnackbar } from '../hooks/useSnackbar';
@@ -40,10 +42,12 @@ export default function ApplicationsView() {
     const [formOpen, setFormOpen] = useState(false);
     const [editingApp, setEditingApp] = useState<Application | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Application | null>(null);
+    const [detailsApp, setDetailsApp] = useState<Application | null>(null);
 
     // Filter / search state
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('All');
+    const [sortOption, setSortOption] = useState<string>('newest');
 
     // Snackbar state
     const { showSnackbar, SnackbarComponent } = useSnackbar();
@@ -59,6 +63,10 @@ export default function ApplicationsView() {
         setFormOpen(true);
     };
 
+    const handleOpenDetails = (app: Application) => {
+        setDetailsApp(app);
+    };
+
     const handleSave = async (data: ApplicationFormData) => {
         try {
             if (editingApp) {
@@ -68,6 +76,16 @@ export default function ApplicationsView() {
                 await createApplication(data);
                 showSnackbar('Application created successfully');
             }
+        } catch {
+            showSnackbar('Something went wrong', 'error');
+            throw new Error('Save failed');
+        }
+    };
+
+    const handleDetailsSave = async (id: string, data: ApplicationFormData) => {
+        try {
+            await updateApplication(id, data);
+            showSnackbar('Details updated successfully');
         } catch {
             showSnackbar('Something went wrong', 'error');
             throw new Error('Save failed');
@@ -91,7 +109,7 @@ export default function ApplicationsView() {
         }
     };
 
-    // Filtering
+    // Filtering and Sorting
     const filteredApplications = applications.filter((app) => {
         const matchesSearch =
             searchQuery === '' ||
@@ -102,6 +120,23 @@ export default function ApplicationsView() {
         const matchesStatus = statusFilter === 'All' || app.status === statusFilter;
 
         return matchesSearch && matchesStatus;
+    }).sort((a, b) => {
+        switch (sortOption) {
+            case 'newest':
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            case 'oldest':
+                return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            case 'title_asc':
+                return a.title.localeCompare(b.title);
+            case 'title_desc':
+                return b.title.localeCompare(a.title);
+            case 'university_asc':
+                return a.university.localeCompare(b.university);
+            case 'university_desc':
+                return b.university.localeCompare(a.university);
+            default:
+                return 0;
+        }
     });
 
     return (
@@ -166,6 +201,29 @@ export default function ApplicationsView() {
                                 </MenuItem>
                             ))}
                         </TextField>
+                        <TextField
+                            select
+                            size="small"
+                            value={sortOption}
+                            onChange={(e) => setSortOption(e.target.value)}
+                            slotProps={{
+                                input: {
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <SortIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                                        </InputAdornment>
+                                    ),
+                                },
+                            }}
+                            sx={{ minWidth: 160 }}
+                        >
+                            <MenuItem value="newest">Newest first</MenuItem>
+                            <MenuItem value="oldest">Oldest first</MenuItem>
+                            <MenuItem value="title_asc">Title (A-Z)</MenuItem>
+                            <MenuItem value="title_desc">Title (Z-A)</MenuItem>
+                            <MenuItem value="university_asc">University (A-Z)</MenuItem>
+                            <MenuItem value="university_desc">University (Z-A)</MenuItem>
+                        </TextField>
                     </Box>
                 )}
 
@@ -190,6 +248,7 @@ export default function ApplicationsView() {
                         applications={filteredApplications}
                         onEdit={handleOpenEdit}
                         onDelete={handleDeleteRequest}
+                        onOpenDetails={handleOpenDetails}
                     />
                 )}
             </Container>
@@ -221,6 +280,14 @@ export default function ApplicationsView() {
                 existingUniversities={existingUniversities}
                 onClose={() => setFormOpen(false)}
                 onSave={handleSave}
+            />
+
+            {/* Details Dialog (Events + Requirements) */}
+            <ApplicationDetailsDialog
+                open={detailsApp !== null}
+                application={detailsApp}
+                onClose={() => setDetailsApp(null)}
+                onSave={handleDetailsSave}
             />
 
             {/* Delete Confirmation */}

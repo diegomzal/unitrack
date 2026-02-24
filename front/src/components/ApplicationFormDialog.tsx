@@ -21,6 +21,7 @@ import LinkIcon from '@mui/icons-material/Link';
 import {
     APPLICATION_STATUSES,
     EMPTY_FORM_DATA,
+    EMPTY_COSTS,
     type Application,
     type ApplicationFormData,
     type ApplicationLink,
@@ -92,6 +93,9 @@ const ApplicationFormDialog: React.FC<ApplicationFormDialogProps> = ({
                     country: countryValue,
                     duration: parsedDuration,
                     links: parsedLinks,
+                    events: application.events ?? [],
+                    requirements: application.requirements ?? [],
+                    costs: application.costs ?? { ...EMPTY_COSTS },
                     notes: application.notes,
                     status: application.status,
                 });

@@ -15,6 +15,48 @@ export interface ApplicationLink {
     url: string;
 }
 
+export const EVENT_TYPES = ['deadline', 'date-range', 'event'] as const;
+
+export type ApplicationEventType = (typeof EVENT_TYPES)[number];
+
+export const EVENT_TYPE_LABELS: Record<ApplicationEventType, string> = {
+    deadline: 'Deadline',
+    'date-range': 'Date Range',
+    event: 'Event',
+};
+
+export const EVENT_COLORS = [
+    '#EF4444', // red
+    '#F97316', // orange
+    '#EAB308', // yellow
+    '#22C55E', // green
+    '#3B82F6', // blue
+    '#8B5CF6', // violet
+    '#EC4899', // pink
+    '#06B6D4', // cyan
+] as const;
+
+export interface ApplicationEvent {
+    id: string;
+    title: string;
+    type: ApplicationEventType;
+    date: string;       // ISO date string (YYYY-MM-DD)
+    endDate?: string;    // ISO date string, only for 'date-range'
+    color: string;
+}
+
+export interface ApplicationRequirement {
+    id: string;
+    title: string;
+    completed: boolean;
+}
+
+export interface ApplicationCosts {
+    tuitionFeePerYear: number | null;
+    livingCostPerYear: number | null;
+    scholarshipInfo: string;
+}
+
 export interface Application {
     _id: string;
     userId: string;
@@ -24,6 +66,9 @@ export interface Application {
     country: string; // ISO country code
     duration: number | null; // in years
     links: ApplicationLink[];
+    events: ApplicationEvent[];
+    requirements: ApplicationRequirement[];
+    costs: ApplicationCosts;
     notes: string;
     status: ApplicationStatus;
     createdAt: string;
@@ -32,6 +77,12 @@ export interface Application {
 
 export type ApplicationFormData = Omit<Application, '_id' | 'userId' | 'createdAt' | 'updatedAt'>;
 
+export const EMPTY_COSTS: ApplicationCosts = {
+    tuitionFeePerYear: null,
+    livingCostPerYear: null,
+    scholarshipInfo: '',
+};
+
 export const EMPTY_FORM_DATA: ApplicationFormData = {
     title: '',
     description: '',
@@ -39,6 +90,9 @@ export const EMPTY_FORM_DATA: ApplicationFormData = {
     country: '',
     duration: null,
     links: [],
+    events: [],
+    requirements: [],
+    costs: { ...EMPTY_COSTS },
     notes: '',
     status: 'Not started',
 };

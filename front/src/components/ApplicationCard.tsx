@@ -6,6 +6,8 @@ import {
     Tooltip,
     Link,
     Collapse,
+    Chip,
+    LinearProgress,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -14,8 +16,15 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import LinkIcon from '@mui/icons-material/Link';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SchoolIcon from '@mui/icons-material/School';
+import EventIcon from '@mui/icons-material/Event';
+import FlagIcon from '@mui/icons-material/Flag';
+import DateRangeIcon from '@mui/icons-material/DateRange';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import ChecklistIcon from '@mui/icons-material/Checklist';
 import { useState } from 'react';
-import type { Application } from '../types/application';
+import type { Application, ApplicationEvent } from '../types/application';
+import { EVENT_TYPE_LABELS } from '../types/application';
 import StatusChip from './StatusChip';
 import { getCountryByCode } from '../data/countries';
 
@@ -23,9 +32,10 @@ interface ApplicationCardProps {
     application: Application;
     onEdit: (application: Application) => void;
     onDelete: (id: string) => void;
+    onOpenDetails: (application: Application) => void;
 }
 
-const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onEdit, onDelete }) => {
+const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onEdit, onDelete, onOpenDetails }) => {
     const [expanded, setExpanded] = useState(false);
 
     const country = application.country ? getCountryByCode(application.country) : null;
@@ -36,11 +46,34 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onEdit, 
         if (typeof raw === 'number') {
             return `${raw} year${raw !== 1 ? 's' : ''}`;
         }
-        // Backward compat: old string data (e.g. "2 years")
         const num = parseInt(String(raw), 10);
         if (!isNaN(num)) return `${num} year${num !== 1 ? 's' : ''}`;
         return String(raw);
     })();
+
+    const events: ApplicationEvent[] = application.events ?? [];
+    const requirements = application.requirements ?? [];
+    const completedReqs = requirements.filter((r) => r.completed).length;
+    const reqProgress = requirements.length > 0 ? (completedReqs / requirements.length) * 100 : 0;
+
+    const costs = application.costs;
+    const annualCost = (costs?.tuitionFeePerYear ?? 0) + (costs?.livingCostPerYear ?? 0);
+    const formattedAnnualCost = annualCost > 0
+        ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(annualCost) + '/yr'
+        : null;
+
+    const getEventIcon = (type: ApplicationEvent['type']) => {
+        switch (type) {
+            case 'deadline': return <FlagIcon sx={{ fontSize: 14 }} />;
+            case 'date-range': return <DateRangeIcon sx={{ fontSize: 14 }} />;
+            case 'event': return <EventIcon sx={{ fontSize: 14 }} />;
+        }
+    };
+
+    const formatDate = (d: string) => {
+        const date = new Date(d + 'T00:00:00');
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
 
     return (
         <Card sx={{
@@ -97,7 +130,6 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onEdit, 
                             </Box>
                         )}
 
-                        {/* Fallback for old data with location instead of country code */}
                         {!country && application.country && (
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                 <PublicIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
@@ -124,6 +156,33 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onEdit, 
                                 </Typography>
                             </Box>
                         )}
+
+                        {events.length > 0 && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <EventIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                                <Typography variant="caption" color="text.secondary">
+                                    {events.length} event{events.length > 1 ? 's' : ''}
+                                </Typography>
+                            </Box>
+                        )}
+
+                        {requirements.length > 0 && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <ChecklistIcon sx={{ fontSize: 14, color: reqProgress === 100 ? 'success.main' : 'text.secondary' }} />
+                                <Typography variant="caption" color={reqProgress === 100 ? 'success.main' : 'text.secondary'} fontWeight={reqProgress === 100 ? 600 : 400}>
+                                    {completedReqs}/{requirements.length}
+                                </Typography>
+                            </Box>
+                        )}
+
+                        {formattedAnnualCost && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <AttachMoneyIcon sx={{ fontSize: 14, color: 'primary.light' }} />
+                                <Typography variant="caption" color="primary.light" fontWeight={600}>
+                                    {formattedAnnualCost}
+                                </Typography>
+                            </Box>
+                        )}
                     </Box>
                 </Box>
 
@@ -132,14 +191,27 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onEdit, 
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: { xs: 'space-between', sm: 'flex-end' },
-                    gap: 1,
+                    gap: 0.5,
                     mt: { xs: 1, sm: 0 },
                     pt: { xs: 1.5, sm: 0 },
                     borderTop: { xs: '1px solid', sm: 'none' },
                     borderColor: 'divider',
-                    minWidth: { sm: '140px' }
+                    minWidth: { sm: '170px' }
                 }}>
                     <Box sx={{ display: 'flex', gap: 0.5 }}>
+                        <Tooltip title="Details & Requirements">
+                            <IconButton
+                                size="small"
+                                onClick={() => onOpenDetails(application)}
+                                sx={{
+                                    color: 'secondary.main',
+                                    bgcolor: 'rgba(0, 229, 255, 0.08)',
+                                    '&:hover': { bgcolor: 'rgba(0, 229, 255, 0.16)' },
+                                }}
+                            >
+                                <InfoOutlinedIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
                         <Tooltip title="Edit">
                             <IconButton
                                 size="small"
@@ -174,6 +246,24 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onEdit, 
                 </Box>
             </Box>
 
+            {/* Requirements progress bar (compact) */}
+            {requirements.length > 0 && (
+                <LinearProgress
+                    variant="determinate"
+                    value={reqProgress}
+                    sx={{
+                        height: 3,
+                        '& .MuiLinearProgress-bar': {
+                            background: reqProgress === 100
+                                ? 'linear-gradient(135deg, #22C55E, #16A34A)'
+                                : 'linear-gradient(135deg, #3B82F6, #2563EB)',
+                            transition: 'transform 0.4s ease',
+                        },
+                        bgcolor: 'rgba(59, 130, 246, 0.06)',
+                    }}
+                />
+            )}
+
             <Collapse in={expanded}>
                 <Box sx={{ px: { xs: 2, sm: 3 }, pb: 2, pt: 0 }}>
                     <Box sx={{
@@ -187,14 +277,14 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onEdit, 
                             <Typography
                                 variant="body2"
                                 color="text.secondary"
-                                sx={{ mb: (application.notes || application.links.length > 0) ? 2 : 0 }}
+                                sx={{ mb: (application.notes || application.links.length > 0 || events.length > 0 || requirements.length > 0) ? 2 : 0 }}
                             >
                                 {application.description}
                             </Typography>
                         )}
 
                         {application.notes && (
-                            <Box sx={{ mb: application.links.length > 0 ? 2 : 0 }}>
+                            <Box sx={{ mb: (application.links.length > 0 || events.length > 0 || requirements.length > 0) ? 2 : 0 }}>
                                 <Typography variant="caption" color="primary.main" fontWeight={600} sx={{ textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
                                     Notes
                                 </Typography>
@@ -205,20 +295,15 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onEdit, 
                         )}
 
                         {application.links.length > 0 && (
-                            <Box>
+                            <Box sx={{ mb: (events.length > 0 || requirements.length > 0) ? 2 : 0 }}>
                                 <Typography variant="caption" color="primary.main" fontWeight={600} sx={{ textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
                                     Links
                                 </Typography>
                                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                                     {application.links.map((link, index) => {
-                                        // Support both old string format and new object format
                                         let url = typeof link === 'string' ? link : link.url;
                                         const name = typeof link === 'string' ? link : link.name;
-
-                                        if (!/^https?:\/\//i.test(url)) {
-                                            url = `https://${url}`;
-                                        }
-
+                                        if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
                                         return (
                                             <Link
                                                 key={index}
@@ -227,17 +312,10 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onEdit, 
                                                 rel="noopener noreferrer"
                                                 variant="body2"
                                                 sx={{
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    whiteSpace: 'nowrap',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: 0.5,
-                                                    color: 'primary.main',
-                                                    textDecoration: 'none',
-                                                    '&:hover': {
-                                                        textDecoration: 'underline'
-                                                    }
+                                                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                                    display: 'flex', alignItems: 'center', gap: 0.5,
+                                                    color: 'primary.main', textDecoration: 'none',
+                                                    '&:hover': { textDecoration: 'underline' }
                                                 }}
                                             >
                                                 <LinkIcon fontSize="small" sx={{ opacity: 0.7 }} />
@@ -245,6 +323,86 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onEdit, 
                                             </Link>
                                         );
                                     })}
+                                </Box>
+                            </Box>
+                        )}
+
+                        {events.length > 0 && (
+                            <Box sx={{ mb: requirements.length > 0 ? 2 : 0 }}>
+                                <Typography variant="caption" color="primary.main" fontWeight={600} sx={{ textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                                    Dates & Deadlines
+                                </Typography>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                                    {events.map((event) => (
+                                        <Box
+                                            key={event.id}
+                                            sx={{
+                                                display: 'flex', alignItems: 'center', gap: 1,
+                                                py: 0.5, px: 1, borderRadius: 1.5,
+                                                bgcolor: `${event.color}11`,
+                                                border: '1px solid', borderColor: `${event.color}33`,
+                                            }}
+                                        >
+                                            <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: event.color, flexShrink: 0 }} />
+                                            <Box sx={{ color: event.color, display: 'flex', flexShrink: 0 }}>
+                                                {getEventIcon(event.type)}
+                                            </Box>
+                                            <Typography variant="body2" fontWeight={500} sx={{ flex: 1 }}>
+                                                {event.title}
+                                            </Typography>
+                                            <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
+                                                {formatDate(event.date)}
+                                                {event.endDate && ` — ${formatDate(event.endDate)}`}
+                                            </Typography>
+                                            <Chip
+                                                label={EVENT_TYPE_LABELS[event.type]}
+                                                size="small"
+                                                sx={{
+                                                    height: 20, fontSize: '0.65rem',
+                                                    bgcolor: `${event.color}22`, color: event.color, fontWeight: 600,
+                                                }}
+                                            />
+                                        </Box>
+                                    ))}
+                                </Box>
+                            </Box>
+                        )}
+
+                        {requirements.length > 0 && (
+                            <Box>
+                                <Typography variant="caption" color="primary.main" fontWeight={600} sx={{ textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                                    Requirements ({completedReqs}/{requirements.length})
+                                </Typography>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                    {requirements.map((req) => (
+                                        <Box
+                                            key={req.id}
+                                            sx={{
+                                                display: 'flex', alignItems: 'center', gap: 1,
+                                                py: 0.5, px: 1, borderRadius: 1.5,
+                                                bgcolor: req.completed ? 'rgba(34, 197, 94, 0.06)' : 'transparent',
+                                            }}
+                                        >
+                                            <Box
+                                                sx={{
+                                                    width: 8, height: 8, borderRadius: '50%',
+                                                    bgcolor: req.completed ? 'success.main' : 'text.secondary',
+                                                    opacity: req.completed ? 1 : 0.4,
+                                                    flexShrink: 0,
+                                                }}
+                                            />
+                                            <Typography
+                                                variant="body2"
+                                                sx={{
+                                                    flex: 1,
+                                                    textDecoration: req.completed ? 'line-through' : 'none',
+                                                    color: req.completed ? 'text.secondary' : 'text.primary',
+                                                }}
+                                            >
+                                                {req.title}
+                                            </Typography>
+                                        </Box>
+                                    ))}
                                 </Box>
                             </Box>
                         )}
