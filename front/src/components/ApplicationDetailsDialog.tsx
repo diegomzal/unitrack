@@ -729,13 +729,18 @@ const ApplicationDetailsDialog: React.FC<ApplicationDetailsDialogProps> = ({
                     onChange={(_e, v) => setTab(v)}
                     textColor="primary"
                     indicatorColor="primary"
+                    variant="scrollable"
+                    scrollButtons="auto"
+                    allowScrollButtonsMobile
                     sx={{
                         minHeight: 40,
                         '.MuiTab-root': {
                             minHeight: 40,
                             textTransform: 'none',
                             fontWeight: 600,
-                            fontSize: '0.85rem',
+                            fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                            px: { xs: 1, sm: 2 },
+                            minWidth: 'auto',
                         },
                     }}
                 >

@@ -181,24 +181,40 @@ export default function SharingSection({
             ) : (
                 <List disablePadding>
                     {acceptedShares.map((share) => (
-                        <ListItem key={share._id} sx={{ py: 1.5, px: 1, borderRadius: 2, '&:hover': { bgcolor: 'action.hover' } }}>
-                            <ListItemAvatar>
-                                <Avatar sx={{ width: 36, height: 36, bgcolor: 'primary.main' }}>
-                                    {(share.sharedWithName || share.sharedWithEmail).charAt(0).toUpperCase()}
-                                </Avatar>
-                            </ListItemAvatar>
-                            <ListItemText
-                                primary={share.sharedWithName || share.sharedWithEmail}
-                                secondary={
-                                    <Box component="div" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
+                        <ListItem
+                            key={share._id}
+                            disableGutters
+                            sx={{
+                                py: 1.5,
+                                px: 1,
+                                borderRadius: 2,
+                                '&:hover': { bgcolor: 'action.hover' },
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                            }}
+                        >
+                            <Avatar sx={{ width: 36, height: 36, bgcolor: 'primary.main', flexShrink: 0 }}>
+                                {(share.sharedWithName || share.sharedWithEmail).charAt(0).toUpperCase()}
+                            </Avatar>
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                                <Typography variant="body2" fontWeight={600} noWrap>
+                                    {share.sharedWithName || share.sharedWithEmail}
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25, flexWrap: 'wrap' }}>
+                                    <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: { xs: 140, sm: 'none' } }}>
                                         {share.sharedWithEmail}
-                                        <Chip component="span" label={share.shareAll ? 'All apps' : `${share.applicationIds.length} app(s)`} size="small" variant="outlined" sx={{ ml: 1, height: 20, fontSize: '0.7rem' }} />
-                                    </Box>
-                                }
-                                primaryTypographyProps={{ fontWeight: 600, variant: 'body2' }}
-                                secondaryTypographyProps={{ component: 'div' }}
-                            />
-                            <ListItemSecondaryAction>
+                                    </Typography>
+                                    <Chip
+                                        component="span"
+                                        label={share.shareAll ? 'All apps' : `${share.applicationIds.length} app(s)`}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{ height: 20, fontSize: '0.7rem' }}
+                                    />
+                                </Box>
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                                 <Tooltip title="Configure sharing">
                                     <IconButton size="small" onClick={() => onOpenEdit(share)} sx={{ mr: 0.5 }}>
                                         <EditIcon fontSize="small" />
@@ -209,7 +225,7 @@ export default function SharingSection({
                                         <DeleteIcon fontSize="small" />
                                     </IconButton>
                                 </Tooltip>
-                            </ListItemSecondaryAction>
+                            </Box>
                         </ListItem>
                     ))}
                 </List>
@@ -242,25 +258,37 @@ export default function SharingSection({
                         </Typography>
                         <List disablePadding>
                             {receivedShares.map((share) => (
-                                <ListItem key={share._id} sx={{ py: 1.5, px: 1, borderRadius: 2, '&:hover': { bgcolor: 'action.hover' } }}>
-                                    <ListItemAvatar>
-                                        <Avatar sx={{ width: 36, height: 36, bgcolor: 'primary.main' }}>
-                                            {(share.ownerName || share.ownerEmail).charAt(0).toUpperCase()}
-                                        </Avatar>
-                                    </ListItemAvatar>
-                                    <ListItemText
-                                        primary={share.ownerName || share.ownerEmail}
-                                        secondary={share.ownerEmail}
-                                        primaryTypographyProps={{ fontWeight: 600, variant: 'body2' }}
-                                        secondaryTypographyProps={{ variant: 'caption' }}
-                                    />
-                                    <ListItemSecondaryAction>
+                                <ListItem
+                                    key={share._id}
+                                    disableGutters
+                                    sx={{
+                                        py: 1.5,
+                                        px: 1,
+                                        borderRadius: 2,
+                                        '&:hover': { bgcolor: 'action.hover' },
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1,
+                                    }}
+                                >
+                                    <Avatar sx={{ width: 36, height: 36, bgcolor: 'primary.main', flexShrink: 0 }}>
+                                        {(share.ownerName || share.ownerEmail).charAt(0).toUpperCase()}
+                                    </Avatar>
+                                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                                        <Typography variant="body2" fontWeight={600} noWrap>
+                                            {share.ownerName || share.ownerEmail}
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary" noWrap>
+                                            {share.ownerEmail}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ flexShrink: 0 }}>
                                         <Tooltip title="Stop viewing their applications">
                                             <IconButton size="small" color="error" onClick={() => onRemoveReceivedShare(share)}>
                                                 <VisibilityOffIcon fontSize="small" />
                                             </IconButton>
                                         </Tooltip>
-                                    </ListItemSecondaryAction>
+                                    </Box>
                                 </ListItem>
                             ))}
                         </List>
@@ -301,6 +329,7 @@ export default function SharingSection({
                                 {invitations.map((invitation) => (
                                     <ListItem
                                         key={invitation._id}
+                                        disableGutters
                                         sx={{
                                             py: 1.5,
                                             px: 1,
@@ -309,22 +338,25 @@ export default function SharingSection({
                                             border: '1px solid',
                                             borderColor: 'warning.main',
                                             bgcolor: 'rgba(255, 152, 0, 0.04)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 1,
                                         }}
                                     >
-                                        <ListItemAvatar>
-                                            <Avatar sx={{ width: 36, height: 36, bgcolor: 'primary.main' }}>
-                                                {(invitation.ownerName || invitation.ownerEmail)
-                                                    .charAt(0)
-                                                    .toUpperCase()}
-                                            </Avatar>
-                                        </ListItemAvatar>
-                                        <ListItemText
-                                            primary={invitation.ownerName || invitation.ownerEmail}
-                                            secondary={`${invitation.ownerEmail} wants to share their applications with you`}
-                                            primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                                            secondaryTypographyProps={{ variant: 'caption', color: 'text.secondary' }}
-                                        />
-                                        <ListItemSecondaryAction>
+                                        <Avatar sx={{ width: 36, height: 36, bgcolor: 'primary.main', flexShrink: 0 }}>
+                                            {(invitation.ownerName || invitation.ownerEmail)
+                                                .charAt(0)
+                                                .toUpperCase()}
+                                        </Avatar>
+                                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                                            <Typography variant="body2" fontWeight={600} noWrap>
+                                                {invitation.ownerName || invitation.ownerEmail}
+                                            </Typography>
+                                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                                {invitation.ownerEmail} wants to share their applications with you
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                                             <Tooltip title="Accept invitation">
                                                 <IconButton
                                                     size="small"
@@ -344,7 +376,7 @@ export default function SharingSection({
                                                     <CancelIcon fontSize="small" />
                                                 </IconButton>
                                             </Tooltip>
-                                        </ListItemSecondaryAction>
+                                        </Box>
                                     </ListItem>
                                 ))}
                             </List>
@@ -366,30 +398,48 @@ export default function SharingSection({
 
                     <List disablePadding>
                         {pendingShares.map((share) => (
-                            <ListItem key={share._id} sx={{ py: 1.5, px: 1, borderRadius: 2, '&:hover': { bgcolor: 'action.hover' } }}>
-                                <ListItemAvatar>
-                                    <Avatar sx={{ width: 36, height: 36, bgcolor: 'grey.400' }}>
-                                        {(share.sharedWithName || share.sharedWithEmail).charAt(0).toUpperCase()}
-                                    </Avatar>
-                                </ListItemAvatar>
-                                <ListItemText
-                                    primary={share.sharedWithName || share.sharedWithEmail}
-                                    secondary={
-                                        <Box component="div" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
+                            <ListItem
+                                key={share._id}
+                                disableGutters
+                                sx={{
+                                    py: 1.5,
+                                    px: 1,
+                                    borderRadius: 2,
+                                    '&:hover': { bgcolor: 'action.hover' },
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                }}
+                            >
+                                <Avatar sx={{ width: 36, height: 36, bgcolor: 'grey.400', flexShrink: 0 }}>
+                                    {(share.sharedWithName || share.sharedWithEmail).charAt(0).toUpperCase()}
+                                </Avatar>
+                                <Box sx={{ flex: 1, minWidth: 0 }}>
+                                    <Typography variant="body2" fontWeight={600} noWrap>
+                                        {share.sharedWithName || share.sharedWithEmail}
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25, flexWrap: 'wrap' }}>
+                                        <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: { xs: 140, sm: 'none' } }}>
                                             {share.sharedWithEmail}
-                                            <Chip component="span" icon={<HourglassTopIcon sx={{ fontSize: '14px !important' }} />} label="Awaiting response" size="small" color="warning" variant="outlined" sx={{ ml: 1, height: 20, fontSize: '0.7rem' }} />
-                                        </Box>
-                                    }
-                                    primaryTypographyProps={{ fontWeight: 600, variant: 'body2' }}
-                                    secondaryTypographyProps={{ component: 'div' }}
-                                />
-                                <ListItemSecondaryAction>
+                                        </Typography>
+                                        <Chip
+                                            component="span"
+                                            icon={<HourglassTopIcon sx={{ fontSize: '14px !important' }} />}
+                                            label="Awaiting response"
+                                            size="small"
+                                            color="warning"
+                                            variant="outlined"
+                                            sx={{ height: 20, fontSize: '0.7rem' }}
+                                        />
+                                    </Box>
+                                </Box>
+                                <Box sx={{ flexShrink: 0 }}>
                                     <Tooltip title="Cancel invitation">
                                         <IconButton size="small" color="error" onClick={() => onDeleteShare(share)}>
                                             <DeleteIcon fontSize="small" />
                                         </IconButton>
                                     </Tooltip>
-                                </ListItemSecondaryAction>
+                                </Box>
                             </ListItem>
                         ))}
                     </List>

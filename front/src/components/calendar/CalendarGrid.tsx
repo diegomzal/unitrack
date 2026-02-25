@@ -12,6 +12,8 @@ interface CalendarGridProps {
     isMobile: boolean;
 }
 
+const MOBILE_DAY_SIZE = 28;
+
 export function CalendarGrid({
     weeks,
     weekSegmentsMap,
@@ -92,32 +94,33 @@ export function CalendarGrid({
                                                 : {},
                                             display: 'flex',
                                             flexDirection: 'column',
-                                            p: { xs: 0.25, sm: 0.5 },
+                                            alignItems: isMobile ? 'center' : 'flex-end',
+                                            p: { xs: 0.5, sm: 0.5 },
+                                            pt: { xs: 0.5, sm: 0.5 },
                                         }}
                                     >
                                         {/* Day number */}
-                                        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                            <Typography
-                                                variant="caption"
-                                                sx={{
-                                                    width: today ? 24 : 'auto',
-                                                    height: today ? 24 : 'auto',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    borderRadius: '50%',
-                                                    fontWeight: today ? 700 : 400,
-                                                    bgcolor: today ? 'primary.main' : 'transparent',
-                                                    color: today
-                                                        ? '#fff'
-                                                        : inCurrentMonth
-                                                            ? 'text.primary'
-                                                            : 'text.secondary',
-                                                }}
-                                            >
-                                                {format(day, 'd')}
-                                            </Typography>
-                                        </Box>
+                                        <Typography
+                                            variant="caption"
+                                            sx={{
+                                                width: isMobile ? MOBILE_DAY_SIZE : today ? 24 : 'auto',
+                                                height: isMobile ? MOBILE_DAY_SIZE : today ? 24 : 'auto',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                borderRadius: '50%',
+                                                fontWeight: today ? 700 : 500,
+                                                fontSize: isMobile ? '0.75rem' : '0.75rem',
+                                                bgcolor: today ? 'primary.main' : 'transparent',
+                                                color: today
+                                                    ? '#fff'
+                                                    : inCurrentMonth
+                                                        ? 'text.primary'
+                                                        : 'text.secondary',
+                                            }}
+                                        >
+                                            {format(day, 'd')}
+                                        </Typography>
                                     </Box>
                                 );
                             })}
