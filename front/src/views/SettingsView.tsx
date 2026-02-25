@@ -31,12 +31,10 @@ import SearchIcon from '@mui/icons-material/Search';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
-import LogoutIcon from '@mui/icons-material/Logout';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import { useAuth } from '../contexts/AuthContext';
 import {
     userService,
     shareService,
@@ -47,7 +45,6 @@ import { useApplications } from '../hooks/useApplications';
 import { useSnackbar } from '../hooks/useSnackbar';
 
 export default function SettingsView() {
-    const { user, signOut } = useAuth();
     const { applications } = useApplications();
     const { showSnackbar, SnackbarComponent } = useSnackbar();
 
@@ -234,46 +231,6 @@ export default function SettingsView() {
     return (
         <>
             <Container maxWidth="md" sx={{ flex: 1, py: 3, px: { xs: 2, sm: 3 } }}>
-                {/* Profile Section */}
-                <Paper
-                    sx={{
-                        p: 3,
-                        mb: 3,
-                        borderRadius: 3,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        flexWrap: 'wrap',
-                        gap: 2,
-                    }}
-                >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar
-                            src={user?.photoURL || undefined}
-                            sx={{ width: 56, height: 56 }}
-                        >
-                            {user?.displayName?.charAt(0) || user?.email?.charAt(0) || '?'}
-                        </Avatar>
-                        <Box>
-                            <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-                                {user?.displayName || 'User'}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                {user?.email}
-                            </Typography>
-                        </Box>
-                    </Box>
-                    <Button
-                        variant="outlined"
-                        color="error"
-                        startIcon={<LogoutIcon />}
-                        onClick={signOut}
-                        sx={{ textTransform: 'none' }}
-                    >
-                        Sign out
-                    </Button>
-                </Paper>
-
                 {/* Pending Invitations Section (for the recipient) */}
                 {!invitationsLoading && invitations.length > 0 && (
                     <Paper

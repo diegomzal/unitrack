@@ -1,16 +1,32 @@
+import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Box, Tabs, Tab, Avatar, Tooltip } from '@mui/material';
+import { AppBar, Toolbar, Typography, Box, Tabs, Tab, Avatar, Tooltip, Menu, MenuItem, ListItemIcon, ListItemText, Divider } from '@mui/material';
 import SchoolIcon from '@mui/icons-material/School';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ChecklistIcon from '@mui/icons-material/Checklist';
-
+import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function MainLayout() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { user } = useAuth();
+    const { user, signOut } = useAuth();
+
+    const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
+
+    const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorElUser(event.currentTarget);
+    };
+
+    const handleCloseUserMenu = () => {
+        setAnchorElUser(null);
+    };
+
+    const handleLogout = async () => {
+        handleCloseUserMenu();
+        await signOut();
+    };
 
     // Map root path to applications for tab selection
     const currentTab = location.pathname === '/' ? '/applications' : location.pathname;
@@ -85,11 +101,52 @@ export default function MainLayout() {
                                 border: '2px solid',
                                 borderColor: 'primary.main',
                             }}
-                            onClick={() => navigate('/settings')}
+                            onClick={handleOpenUserMenu}
                         >
                             {user?.displayName?.charAt(0) || user?.email?.charAt(0) || '?'}
                         </Avatar>
                     </Tooltip>
+                    <Menu
+                        sx={{ mt: '45px' }}
+                        id="menu-appbar"
+                        anchorEl={anchorElUser}
+                        anchorOrigin={{
+                            vertical: 'top',
+                            horizontal: 'right',
+                        }}
+                        keepMounted
+                        transformOrigin={{
+                            vertical: 'top',
+                            horizontal: 'right',
+                        }}
+                        open={Boolean(anchorElUser)}
+                        onClose={handleCloseUserMenu}
+                        PaperProps={{
+                            sx: { minWidth: 200, borderRadius: 2, mt: 1 }
+                        }}
+                    >
+                        <Box sx={{ px: 2, py: 1.5 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
+                                {user?.displayName || 'User'}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                                {user?.email}
+                            </Typography>
+                        </Box>
+                        <Divider sx={{ my: 0.5 }} />
+                        <MenuItem onClick={() => { handleCloseUserMenu(); navigate('/settings'); }}>
+                            <ListItemIcon>
+                                <SettingsIcon fontSize="small" color="action" />
+                            </ListItemIcon>
+                            <ListItemText>Settings</ListItemText>
+                        </MenuItem>
+                        <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+                            <ListItemIcon>
+                                <LogoutIcon fontSize="small" color="error" />
+                            </ListItemIcon>
+                            <ListItemText>Sign out</ListItemText>
+                        </MenuItem>
+                    </Menu>
                 </Toolbar>
             </AppBar>
             <Box sx={{ display: 'flex', flex: 1, flexDirection: 'column', bgcolor: 'background.default' }}>
