@@ -7,7 +7,6 @@ import {
     TextField,
     MenuItem,
     InputAdornment,
-    CircularProgress,
     Accordion,
     AccordionSummary,
     AccordionDetails,
@@ -31,6 +30,8 @@ import ConfirmDeleteDialog from '../components/ConfirmDeleteDialog';
 import EmptyState from '../components/EmptyState';
 import { useSnackbar } from '../hooks/useSnackbar';
 import ApplicationGrid from '../components/ApplicationGrid';
+import ApplicationCardSkeleton from '../components/ApplicationCardSkeleton';
+import SharedGroupSkeleton from '../components/SharedGroupSkeleton';
 
 export default function ApplicationsView() {
     const {
@@ -163,7 +164,7 @@ export default function ApplicationsView() {
         <>
             <Container maxWidth="lg" sx={{ flex: 1, py: 3, px: { xs: 2, sm: 3 } }}>
                 {/* Stats Bar */}
-                {applications.length > 0 && (
+                {!loading && applications.length > 0 && (
                     <Box sx={{ mb: 2 }}>
                         <Typography variant="body2" color="text.secondary">
                             <strong>{applications.length}</strong> application{applications.length !== 1 ? 's' : ''} tracked
@@ -171,8 +172,8 @@ export default function ApplicationsView() {
                     </Box>
                 )}
 
-                {/* Search and Filter */}
-                {applications.length > 0 && (
+                {/* Search and Filter — always visible so UI doesn't shift */}
+                {(loading || applications.length > 0) && (
                     <Box
                         sx={{
                             display: 'flex',
@@ -187,6 +188,7 @@ export default function ApplicationsView() {
                             placeholder="Search programs, universities..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
+                            disabled={loading}
                             slotProps={{
                                 input: {
                                     startAdornment: (
@@ -203,6 +205,7 @@ export default function ApplicationsView() {
                             size="small"
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
+                            disabled={loading}
                             slotProps={{
                                 input: {
                                     startAdornment: (
@@ -226,6 +229,7 @@ export default function ApplicationsView() {
                             size="small"
                             value={sortOption}
                             onChange={(e) => setSortOption(e.target.value)}
+                            disabled={loading}
                             slotProps={{
                                 input: {
                                     startAdornment: (
@@ -249,8 +253,8 @@ export default function ApplicationsView() {
 
                 {/* Content */}
                 {loading ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
-                        <CircularProgress />
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                        <ApplicationCardSkeleton count={2} />
                     </Box>
                 ) : applications.length === 0 ? (
                     <EmptyState onAdd={handleOpenCreate} />
@@ -272,86 +276,84 @@ export default function ApplicationsView() {
                     />
                 )}
 
-                {/* Shared With Me Section */}
-                {!sharedLoading && hasSharedContent && (
-                    <>
-                        <Divider sx={{ my: 4 }} />
-                        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <PeopleIcon sx={{ color: 'primary.main' }} />
-                            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                                Shared with me
-                            </Typography>
-                        </Box>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                            Read-only view of applications shared by others
-                        </Typography>
+                {/* Shared With Me Section — always visible */}
+                <Divider sx={{ my: 4 }} />
+                <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <PeopleIcon sx={{ color: 'primary.main' }} />
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                        Shared with me
+                    </Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Read-only view of applications shared by others
+                </Typography>
 
-                        {sharedGroups.map((group) => (
-                            <Accordion
-                                key={group.share._id}
-                                defaultExpanded
-                                sx={{
-                                    mb: 2,
-                                    bgcolor: 'background.paper',
-                                    borderRadius: 2,
-                                    '&:before': { display: 'none' },
-                                    border: '1px solid',
-                                    borderColor: 'divider',
-                                }}
-                            >
-                                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                        <Avatar
-                                            sx={{
-                                                width: 32,
-                                                height: 32,
-                                                bgcolor: 'primary.main',
-                                                fontSize: '0.875rem',
-                                            }}
-                                        >
-                                            {(group.share.ownerName || group.share.ownerEmail).charAt(0).toUpperCase()}
-                                        </Avatar>
-                                        <Box>
-                                            <Typography variant="subtitle1" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
-                                                {group.share.ownerName || group.share.ownerEmail}
-                                            </Typography>
-                                            <Typography variant="caption" color="text.secondary">
-                                                {group.share.ownerEmail}
-                                            </Typography>
-                                        </Box>
-                                        <Chip
-                                            label={`${group.applications.length} app${group.applications.length !== 1 ? 's' : ''}`}
-                                            size="small"
-                                            sx={{ ml: 1 }}
-                                        />
-                                    </Box>
-                                </AccordionSummary>
-                                <AccordionDetails>
-                                    {group.loading ? (
-                                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                                            <CircularProgress size={28} />
-                                        </Box>
-                                    ) : group.applications.length === 0 ? (
-                                        <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
-                                            No applications shared
+                {sharedLoading ? (
+                    <SharedGroupSkeleton count={1} />
+                ) : !hasSharedContent ? (
+                    <Typography variant="body2" color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
+                        No one is sharing their applications with you yet.
+                    </Typography>
+                ) : (
+                    sharedGroups.map((group) => (
+                        <Accordion
+                            key={group.share._id}
+                            defaultExpanded
+                            sx={{
+                                mb: 2,
+                                bgcolor: 'background.paper',
+                                borderRadius: 2,
+                                '&:before': { display: 'none' },
+                                border: '1px solid',
+                                borderColor: 'divider',
+                            }}
+                        >
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                    <Avatar
+                                        sx={{
+                                            width: 32,
+                                            height: 32,
+                                            bgcolor: 'primary.main',
+                                            fontSize: '0.875rem',
+                                        }}
+                                    >
+                                        {(group.share.ownerName || group.share.ownerEmail).charAt(0).toUpperCase()}
+                                    </Avatar>
+                                    <Box>
+                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
+                                            {group.share.ownerName || group.share.ownerEmail}
                                         </Typography>
-                                    ) : (
-                                        <ApplicationGrid
-                                            applications={group.applications}
-                                            onOpenDetails={handleOpenSharedDetails}
-                                            readOnly
-                                        />
-                                    )}
-                                </AccordionDetails>
-                            </Accordion>
-                        ))}
-                    </>
-                )}
-
-                {sharedLoading && (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 4, mt: 2 }}>
-                        <CircularProgress size={24} />
-                    </Box>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {group.share.ownerEmail}
+                                        </Typography>
+                                    </Box>
+                                    <Chip
+                                        label={`${group.applications.length} app${group.applications.length !== 1 ? 's' : ''}`}
+                                        size="small"
+                                        sx={{ ml: 1 }}
+                                    />
+                                </Box>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                {group.loading ? (
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                        <ApplicationCardSkeleton count={1} />
+                                    </Box>
+                                ) : group.applications.length === 0 ? (
+                                    <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+                                        No applications shared
+                                    </Typography>
+                                ) : (
+                                    <ApplicationGrid
+                                        applications={group.applications}
+                                        onOpenDetails={handleOpenSharedDetails}
+                                        readOnly
+                                    />
+                                )}
+                            </AccordionDetails>
+                        </Accordion>
+                    ))
                 )}
             </Container>
 
