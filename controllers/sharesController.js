@@ -9,6 +9,7 @@ const checkDb = (res) => {
 
 /**
  * Get all shares where the current user is the owner.
+ * Returns both pending and accepted shares so the owner can see invite status.
  * GET /api/shares
  */
 exports.getMyShares = async (req, res) => {
@@ -30,7 +31,8 @@ exports.getMyShares = async (req, res) => {
 };
 
 /**
- * Get all shares where the current user is the recipient (shared with me).
+ * Get all accepted shares where the current user is the recipient.
+ * Only returns accepted shares (for displaying shared applications).
  * GET /api/shares/with-me
  */
 exports.getSharedWithMe = async (req, res) => {
@@ -38,6 +40,7 @@ exports.getSharedWithMe = async (req, res) => {
     try {
         const snapshot = await db.collection('shares')
             .where('sharedWithId', '==', req.user.uid)
+            .where('status', '==', 'accepted')
             .get();
 
         const shares = [];
@@ -52,7 +55,30 @@ exports.getSharedWithMe = async (req, res) => {
 };
 
 /**
- * Create a new share (add a friend to share with).
+ * Get pending invitations for the current user (shares awaiting acceptance).
+ * GET /api/shares/invitations
+ */
+exports.getInvitations = async (req, res) => {
+    if (!checkDb(res)) return;
+    try {
+        const snapshot = await db.collection('shares')
+            .where('sharedWithId', '==', req.user.uid)
+            .where('status', '==', 'pending')
+            .get();
+
+        const invitations = [];
+        snapshot.forEach(doc => {
+            invitations.push({ _id: doc.id, ...doc.data() });
+        });
+        return res.status(200).json(invitations);
+    } catch (error) {
+        console.error('Error getting invitations:', error);
+        return res.status(500).json({ error: 'Failed to fetch invitations' });
+    }
+};
+
+/**
+ * Create a new share invitation (status starts as 'pending').
  * POST /api/shares
  * Body: { sharedWithId, sharedWithEmail, sharedWithName, shareAll, applicationIds }
  */
@@ -69,7 +95,7 @@ exports.createShare = async (req, res) => {
             return res.status(400).json({ error: 'Cannot share with yourself' });
         }
 
-        // Check if share already exists
+        // Check if share already exists (any status)
         const existing = await db.collection('shares')
             .where('ownerId', '==', req.user.uid)
             .where('sharedWithId', '==', sharedWithId)
@@ -77,7 +103,7 @@ exports.createShare = async (req, res) => {
             .get();
 
         if (!existing.empty) {
-            return res.status(409).json({ error: 'Share already exists with this user' });
+            return res.status(409).json({ error: 'An invitation already exists for this user' });
         }
 
         const now = new Date().toISOString();
@@ -88,8 +114,9 @@ exports.createShare = async (req, res) => {
             sharedWithId,
             sharedWithEmail,
             sharedWithName: sharedWithName || '',
-            shareAll: shareAll ?? true, // default: share all applications
-            applicationIds: applicationIds || [], // specific app IDs when shareAll is false
+            shareAll: shareAll ?? true,
+            applicationIds: applicationIds || [],
+            status: 'pending',
             createdAt: now,
             updatedAt: now,
         };
@@ -103,7 +130,62 @@ exports.createShare = async (req, res) => {
 };
 
 /**
+ * Respond to a share invitation (accept or reject).
+ * Only the recipient can respond.
+ * PUT /api/shares/:id/respond
+ * Body: { action: 'accept' | 'reject' }
+ */
+exports.respondToShare = async (req, res) => {
+    if (!checkDb(res)) return;
+    try {
+        const { id } = req.params;
+        const { action } = req.body;
+
+        if (!action || !['accept', 'reject'].includes(action)) {
+            return res.status(400).json({ error: 'Action must be "accept" or "reject"' });
+        }
+
+        const docRef = db.collection('shares').doc(id);
+        const doc = await docRef.get();
+
+        if (!doc.exists) {
+            return res.status(404).json({ error: 'Invitation not found' });
+        }
+
+        const share = doc.data();
+
+        // Only the recipient can respond
+        if (share.sharedWithId !== req.user.uid) {
+            return res.status(403).json({ error: 'Not authorized to respond to this invitation' });
+        }
+
+        if (share.status !== 'pending') {
+            return res.status(400).json({ error: 'This invitation has already been responded to' });
+        }
+
+        if (action === 'reject') {
+            // Delete the share document entirely on rejection
+            await docRef.delete();
+            return res.status(200).json({ message: 'Invitation declined' });
+        }
+
+        // Accept: update status
+        await docRef.update({
+            status: 'accepted',
+            updatedAt: new Date().toISOString(),
+        });
+
+        const updated = await docRef.get();
+        return res.status(200).json({ _id: updated.id, ...updated.data() });
+    } catch (error) {
+        console.error('Error responding to share:', error);
+        return res.status(500).json({ error: 'Failed to respond to invitation' });
+    }
+};
+
+/**
  * Update a share configuration (toggle shareAll, update applicationIds).
+ * Only the owner can update. Only accepted shares can be updated.
  * PUT /api/shares/:id
  * Body: { shareAll, applicationIds }
  */
@@ -118,8 +200,10 @@ exports.updateShare = async (req, res) => {
             return res.status(404).json({ error: 'Share not found' });
         }
 
+        const share = doc.data();
+
         // Only the owner can update
-        if (doc.data().ownerId !== req.user.uid) {
+        if (share.ownerId !== req.user.uid) {
             return res.status(403).json({ error: 'Not authorized to update this share' });
         }
 
@@ -140,7 +224,8 @@ exports.updateShare = async (req, res) => {
 };
 
 /**
- * Delete a share (remove a friend).
+ * Delete a share (cancel invitation or remove sharing).
+ * Owner can always delete. Recipient can delete accepted shares (stop receiving).
  * DELETE /api/shares/:id
  */
 exports.deleteShare = async (req, res) => {
@@ -154,8 +239,13 @@ exports.deleteShare = async (req, res) => {
             return res.status(404).json({ error: 'Share not found' });
         }
 
-        // Only the owner can delete
-        if (doc.data().ownerId !== req.user.uid) {
+        const share = doc.data();
+
+        // Owner can always delete; recipient can delete accepted shares
+        const isOwner = share.ownerId === req.user.uid;
+        const isRecipient = share.sharedWithId === req.user.uid;
+
+        if (!isOwner && !isRecipient) {
             return res.status(403).json({ error: 'Not authorized to delete this share' });
         }
 
@@ -169,6 +259,7 @@ exports.deleteShare = async (req, res) => {
 
 /**
  * Get shared applications (read-only) from a specific owner.
+ * Only works for accepted shares.
  * GET /api/shares/:id/applications
  */
 exports.getSharedApplications = async (req, res) => {
@@ -186,6 +277,11 @@ exports.getSharedApplications = async (req, res) => {
         // Only the recipient can view shared applications
         if (share.sharedWithId !== req.user.uid) {
             return res.status(403).json({ error: 'Not authorized to view these applications' });
+        }
+
+        // Only accepted shares can be read
+        if (share.status !== 'accepted') {
+            return res.status(403).json({ error: 'This share has not been accepted yet' });
         }
 
         let applications = [];

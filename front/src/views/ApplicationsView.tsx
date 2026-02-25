@@ -8,13 +8,22 @@ import {
     MenuItem,
     InputAdornment,
     CircularProgress,
+    Accordion,
+    AccordionSummary,
+    AccordionDetails,
+    Avatar,
+    Chip,
+    Divider,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import SortIcon from '@mui/icons-material/Sort';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import PeopleIcon from '@mui/icons-material/People';
 
 import { useApplications } from '../hooks/useApplications';
+import { useSharedApplications } from '../hooks/useSharedApplications';
 import { APPLICATION_STATUSES, type Application, type ApplicationFormData } from '../types/application';
 import ApplicationFormDialog from '../components/ApplicationFormDialog';
 import ApplicationDetailsDialog from '../components/ApplicationDetailsDialog';
@@ -32,6 +41,8 @@ export default function ApplicationsView() {
         deleteApplication,
     } = useApplications();
 
+    const { sharedGroups, loading: sharedLoading } = useSharedApplications();
+
     // Derive unique university names for autocomplete
     const existingUniversities = useMemo(
         () => [...new Set(applications.map((a) => a.university).filter(Boolean))],
@@ -43,6 +54,7 @@ export default function ApplicationsView() {
     const [editingApp, setEditingApp] = useState<Application | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Application | null>(null);
     const [detailsApp, setDetailsApp] = useState<Application | null>(null);
+    const [detailsReadOnly, setDetailsReadOnly] = useState(false);
 
     // Filter / search state
     const [searchQuery, setSearchQuery] = useState('');
@@ -64,6 +76,12 @@ export default function ApplicationsView() {
     };
 
     const handleOpenDetails = (app: Application) => {
+        setDetailsReadOnly(false);
+        setDetailsApp(app);
+    };
+
+    const handleOpenSharedDetails = (app: Application) => {
+        setDetailsReadOnly(true);
         setDetailsApp(app);
     };
 
@@ -138,6 +156,8 @@ export default function ApplicationsView() {
                 return 0;
         }
     });
+
+    const hasSharedContent = sharedGroups.length > 0;
 
     return (
         <>
@@ -251,6 +271,88 @@ export default function ApplicationsView() {
                         onOpenDetails={handleOpenDetails}
                     />
                 )}
+
+                {/* Shared With Me Section */}
+                {!sharedLoading && hasSharedContent && (
+                    <>
+                        <Divider sx={{ my: 4 }} />
+                        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <PeopleIcon sx={{ color: 'primary.main' }} />
+                            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                                Shared with me
+                            </Typography>
+                        </Box>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                            Read-only view of applications shared by others
+                        </Typography>
+
+                        {sharedGroups.map((group) => (
+                            <Accordion
+                                key={group.share._id}
+                                defaultExpanded
+                                sx={{
+                                    mb: 2,
+                                    bgcolor: 'background.paper',
+                                    borderRadius: 2,
+                                    '&:before': { display: 'none' },
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                }}
+                            >
+                                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                        <Avatar
+                                            sx={{
+                                                width: 32,
+                                                height: 32,
+                                                bgcolor: 'primary.main',
+                                                fontSize: '0.875rem',
+                                            }}
+                                        >
+                                            {(group.share.ownerName || group.share.ownerEmail).charAt(0).toUpperCase()}
+                                        </Avatar>
+                                        <Box>
+                                            <Typography variant="subtitle1" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
+                                                {group.share.ownerName || group.share.ownerEmail}
+                                            </Typography>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {group.share.ownerEmail}
+                                            </Typography>
+                                        </Box>
+                                        <Chip
+                                            label={`${group.applications.length} app${group.applications.length !== 1 ? 's' : ''}`}
+                                            size="small"
+                                            sx={{ ml: 1 }}
+                                        />
+                                    </Box>
+                                </AccordionSummary>
+                                <AccordionDetails>
+                                    {group.loading ? (
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                                            <CircularProgress size={28} />
+                                        </Box>
+                                    ) : group.applications.length === 0 ? (
+                                        <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+                                            No applications shared
+                                        </Typography>
+                                    ) : (
+                                        <ApplicationGrid
+                                            applications={group.applications}
+                                            onOpenDetails={handleOpenSharedDetails}
+                                            readOnly
+                                        />
+                                    )}
+                                </AccordionDetails>
+                            </Accordion>
+                        ))}
+                    </>
+                )}
+
+                {sharedLoading && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 4, mt: 2 }}>
+                        <CircularProgress size={24} />
+                    </Box>
+                )}
             </Container>
 
             {/* FAB */}
@@ -287,7 +389,8 @@ export default function ApplicationsView() {
                 open={detailsApp !== null}
                 application={detailsApp}
                 onClose={() => setDetailsApp(null)}
-                onSave={handleDetailsSave}
+                onSave={detailsReadOnly ? undefined : handleDetailsSave}
+                readOnly={detailsReadOnly}
             />
 
             {/* Delete Confirmation */}

@@ -206,8 +206,8 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onEdit, 
                                 onClick={() => onOpenDetails(application)}
                                 sx={{
                                     color: 'secondary.main',
-                                    bgcolor: 'rgba(0, 229, 255, 0.08)',
-                                    '&:hover': { bgcolor: 'rgba(0, 229, 255, 0.16)' },
+                                    bgcolor: 'primary.50',
+                                    '&:hover': { bgcolor: 'primary.100' },
                                 }}
                             >
                                 <InfoOutlinedIcon fontSize="small" />

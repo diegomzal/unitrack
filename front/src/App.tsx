@@ -8,7 +8,7 @@ import LoginView from './views/LoginView';
 import ApplicationsView from './views/ApplicationsView';
 import CalendarView from './views/CalendarView';
 import SettingsView from './views/SettingsView';
-import SharedView from './views/SharedView';
+
 import { useEffect } from 'react';
 import { userService } from './services/sharingService';
 
@@ -40,7 +40,7 @@ function AuthenticatedApp() {
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Navigate to="/applications" replace />} />
           <Route path="applications" element={<ApplicationsView />} />
-          <Route path="shared" element={<SharedView />} />
+
           <Route path="calendar" element={<CalendarView />} />
           <Route path="settings" element={<SettingsView />} />
           <Route path="*" element={<Navigate to="/applications" replace />} />

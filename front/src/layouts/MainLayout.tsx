@@ -3,7 +3,7 @@ import { AppBar, Toolbar, Typography, Box, Tabs, Tab, Avatar, Tooltip } from '@m
 import SchoolIcon from '@mui/icons-material/School';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ChecklistIcon from '@mui/icons-material/Checklist';
-import PeopleIcon from '@mui/icons-material/People';
+
 import SettingsIcon from '@mui/icons-material/Settings';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -56,14 +56,7 @@ export default function MainLayout() {
                             value="/applications"
                             sx={{ textTransform: 'none', fontWeight: 600 }}
                         />
-                        <Tab
-                            key="shared"
-                            icon={<PeopleIcon />}
-                            iconPosition="start"
-                            label="Shared"
-                            value="/shared"
-                            sx={{ textTransform: 'none', fontWeight: 600 }}
-                        />
+
                         <Tab
                             key="calendar"
                             icon={<CalendarMonthIcon />}

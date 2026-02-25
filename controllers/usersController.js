@@ -48,7 +48,8 @@ exports.ensureProfile = async (req, res) => {
 };
 
 /**
- * Search users by email prefix (for sharing autocomplete).
+ * Search users by exact email match (for sharing).
+ * Requires a complete email address for security.
  * GET /api/users/search?email=query
  */
 exports.searchByEmail = async (req, res) => {
@@ -58,15 +59,20 @@ exports.searchByEmail = async (req, res) => {
 
     try {
         const { email } = req.query;
-        if (!email || email.length < 3) {
-            return res.status(400).json({ error: 'Email query must be at least 3 characters' });
+        if (!email) {
+            return res.status(400).json({ error: 'Email query is required' });
         }
 
-        // Range query: email >= query AND email < query + high Unicode char
+        // Validate that a full email address was provided
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ error: 'A complete email address is required' });
+        }
+
+        // Exact match query for security
         const snapshot = await db.collection('users')
-            .where('email', '>=', email.toLowerCase())
-            .where('email', '<', email.toLowerCase() + '\uf8ff')
-            .limit(10)
+            .where('email', '==', email.toLowerCase().trim())
+            .limit(5)
             .get();
 
         const users = [];

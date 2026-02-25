@@ -19,6 +19,8 @@ export interface UserSearchResult {
     photoURL: string;
 }
 
+export type ShareStatus = 'pending' | 'accepted' | 'rejected';
+
 export interface Share {
     _id: string;
     ownerId: string;
@@ -29,6 +31,7 @@ export interface Share {
     sharedWithName: string;
     shareAll: boolean;
     applicationIds: string[];
+    status: ShareStatus;
     createdAt: string;
     updatedAt: string;
 }
@@ -40,7 +43,7 @@ export const userService = {
         await fetch(`${API_URL}/users/me`, { method: 'POST', headers });
     },
 
-    /** Search users by email for sharing */
+    /** Search users by exact email for sharing */
     searchByEmail: async (email: string): Promise<UserSearchResult[]> => {
         const headers = await getAuthHeaders();
         const response = await fetch(
@@ -53,7 +56,7 @@ export const userService = {
 };
 
 export const shareService = {
-    /** Get shares I created (people I'm sharing with) */
+    /** Get shares I created (people I'm sharing with) — includes pending and accepted */
     getMyShares: async (): Promise<Share[]> => {
         const headers = await getAuthHeaders();
         const response = await fetch(`${API_URL}/shares`, { headers });
@@ -61,7 +64,7 @@ export const shareService = {
         return response.json();
     },
 
-    /** Get shares where others share with me */
+    /** Get accepted shares where others share with me */
     getSharedWithMe: async (): Promise<Share[]> => {
         const headers = await getAuthHeaders();
         const response = await fetch(`${API_URL}/shares/with-me`, { headers });
@@ -69,7 +72,29 @@ export const shareService = {
         return response.json();
     },
 
-    /** Create a new share */
+    /** Get pending invitations addressed to me */
+    getInvitations: async (): Promise<Share[]> => {
+        const headers = await getAuthHeaders();
+        const response = await fetch(`${API_URL}/shares/invitations`, { headers });
+        if (!response.ok) throw new Error('Failed to fetch invitations');
+        return response.json();
+    },
+
+    /** Respond to a share invitation */
+    respondToShare: async (id: string, action: 'accept' | 'reject'): Promise<void> => {
+        const headers = await getAuthHeaders();
+        const response = await fetch(`${API_URL}/shares/${id}/respond`, {
+            method: 'PUT',
+            headers,
+            body: JSON.stringify({ action }),
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ error: 'Failed to respond' }));
+            throw new Error(err.error);
+        }
+    },
+
+    /** Create a new share invitation */
     createShare: async (data: {
         sharedWithId: string;
         sharedWithEmail: string;

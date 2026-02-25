@@ -32,6 +32,10 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import LogoutIcon from '@mui/icons-material/Logout';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
+import HourglassTopIcon from '@mui/icons-material/HourglassTop';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { useAuth } from '../contexts/AuthContext';
 import {
     userService,
@@ -47,9 +51,17 @@ export default function SettingsView() {
     const { applications } = useApplications();
     const { showSnackbar, SnackbarComponent } = useSnackbar();
 
-    // Shares state
+    // Shares state (shares I created as owner)
     const [shares, setShares] = useState<Share[]>([]);
     const [sharesLoading, setSharesLoading] = useState(true);
+
+    // Invitations state (pending shares addressed to me)
+    const [invitations, setInvitations] = useState<Share[]>([]);
+    const [invitationsLoading, setInvitationsLoading] = useState(true);
+
+    // Received shares state (accepted shares from others)
+    const [receivedShares, setReceivedShares] = useState<Share[]>([]);
+    const [receivedLoading, setReceivedLoading] = useState(true);
 
     // Search state
     const [searchQuery, setSearchQuery] = useState('');
@@ -72,13 +84,42 @@ export default function SettingsView() {
         }
     }, [showSnackbar]);
 
+    const loadInvitations = useCallback(async () => {
+        try {
+            const data = await shareService.getInvitations();
+            setInvitations(data);
+        } catch {
+            showSnackbar('Failed to load invitations', 'error');
+        } finally {
+            setInvitationsLoading(false);
+        }
+    }, [showSnackbar]);
+
+    const loadReceivedShares = useCallback(async () => {
+        try {
+            const data = await shareService.getSharedWithMe();
+            setReceivedShares(data);
+        } catch {
+            showSnackbar('Failed to load received shares', 'error');
+        } finally {
+            setReceivedLoading(false);
+        }
+    }, [showSnackbar]);
+
     useEffect(() => {
         loadShares();
-    }, [loadShares]);
+        loadInvitations();
+        loadReceivedShares();
+    }, [loadShares, loadInvitations, loadReceivedShares]);
 
-    // Debounced user search
+    // Validate email format (must be a full email like user@domain.tld)
+    const isValidEmail = (email: string): boolean => {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+    };
+
+    // Search only when a full email is entered
     useEffect(() => {
-        if (searchQuery.length < 3) {
+        if (!isValidEmail(searchQuery)) {
             setSearchResults([]);
             return;
         }
@@ -86,8 +127,8 @@ export default function SettingsView() {
         const timer = setTimeout(async () => {
             setSearching(true);
             try {
-                const results = await userService.searchByEmail(searchQuery);
-                // Filter out users already shared with
+                const results = await userService.searchByEmail(searchQuery.trim());
+                // Filter out users already shared with (any status)
                 const sharedIds = new Set(shares.map(s => s.sharedWithId));
                 setSearchResults(results.filter(r => !sharedIds.has(r.uid)));
             } catch {
@@ -108,12 +149,12 @@ export default function SettingsView() {
                 sharedWithName: targetUser.displayName,
                 shareAll: true,
             });
-            showSnackbar(`Sharing with ${targetUser.email}`);
+            showSnackbar(`Invitation sent to ${targetUser.email}`);
             setSearchQuery('');
             setSearchResults([]);
             loadShares();
         } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Failed to add share';
+            const message = err instanceof Error ? err.message : 'Failed to send invitation';
             showSnackbar(message, 'error');
         }
     };
@@ -121,8 +162,37 @@ export default function SettingsView() {
     const handleDeleteShare = async (share: Share) => {
         try {
             await shareService.deleteShare(share._id);
-            showSnackbar(`Removed sharing with ${share.sharedWithEmail}`);
+            const msg = share.status === 'pending'
+                ? `Invitation to ${share.sharedWithEmail} cancelled`
+                : `Removed sharing with ${share.sharedWithEmail}`;
+            showSnackbar(msg);
             loadShares();
+        } catch {
+            showSnackbar('Failed to remove share', 'error');
+        }
+    };
+
+    const handleRespondToInvitation = async (invitation: Share, action: 'accept' | 'reject') => {
+        try {
+            await shareService.respondToShare(invitation._id, action);
+            if (action === 'accept') {
+                showSnackbar(`You are now viewing ${invitation.ownerName || invitation.ownerEmail}'s applications`);
+            } else {
+                showSnackbar('Invitation declined');
+            }
+            loadInvitations();
+            loadReceivedShares();
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Failed to respond';
+            showSnackbar(message, 'error');
+        }
+    };
+
+    const handleRemoveReceivedShare = async (share: Share) => {
+        try {
+            await shareService.deleteShare(share._id);
+            showSnackbar(`Stopped viewing ${share.ownerName || share.ownerEmail}'s applications`);
+            loadReceivedShares();
         } catch {
             showSnackbar('Failed to remove share', 'error');
         }
@@ -156,6 +226,10 @@ export default function SettingsView() {
                 : [...prev, appId],
         );
     };
+
+    // Split owner shares into pending and accepted
+    const pendingShares = shares.filter(s => s.status === 'pending');
+    const acceptedShares = shares.filter(s => s.status === 'accepted');
 
     return (
         <>
@@ -200,20 +274,108 @@ export default function SettingsView() {
                     </Button>
                 </Paper>
 
+                {/* Pending Invitations Section (for the recipient) */}
+                {!invitationsLoading && invitations.length > 0 && (
+                    <Paper
+                        sx={{
+                            p: 3,
+                            mb: 3,
+                            borderRadius: 3,
+                            border: '1px solid',
+                            borderColor: 'warning.main',
+                            bgcolor: 'rgba(255, 152, 0, 0.04)',
+                        }}
+                    >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                            <HourglassTopIcon sx={{ color: 'warning.main', fontSize: 22 }} />
+                            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                                Pending Invitations
+                            </Typography>
+                            <Chip
+                                label={invitations.length}
+                                size="small"
+                                color="warning"
+                                sx={{ fontWeight: 700, height: 22 }}
+                            />
+                        </Box>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                            Other users would like to share their applications with you.
+                        </Typography>
+
+                        <List disablePadding>
+                            {invitations.map((invitation) => (
+                                <ListItem
+                                    key={invitation._id}
+                                    sx={{
+                                        py: 1.5,
+                                        px: 1.5,
+                                        mb: 1,
+                                        borderRadius: 2,
+                                        border: '1px solid',
+                                        borderColor: 'divider',
+                                        bgcolor: 'background.paper',
+                                    }}
+                                >
+                                    <ListItemAvatar>
+                                        <Avatar sx={{ width: 36, height: 36, bgcolor: 'primary.main' }}>
+                                            {(invitation.ownerName || invitation.ownerEmail)
+                                                .charAt(0)
+                                                .toUpperCase()}
+                                        </Avatar>
+                                    </ListItemAvatar>
+                                    <ListItemText
+                                        primary={
+                                            <Typography variant="body2" fontWeight={600}>
+                                                {invitation.ownerName || invitation.ownerEmail}
+                                            </Typography>
+                                        }
+                                        secondary={
+                                            <Typography variant="caption" color="text.secondary">
+                                                {invitation.ownerEmail} wants to share their applications with you
+                                            </Typography>
+                                        }
+                                    />
+                                    <ListItemSecondaryAction>
+                                        <Tooltip title="Accept invitation">
+                                            <IconButton
+                                                size="small"
+                                                color="success"
+                                                onClick={() => handleRespondToInvitation(invitation, 'accept')}
+                                                sx={{ mr: 0.5 }}
+                                            >
+                                                <CheckCircleIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title="Decline invitation">
+                                            <IconButton
+                                                size="small"
+                                                color="error"
+                                                onClick={() => handleRespondToInvitation(invitation, 'reject')}
+                                            >
+                                                <CancelIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </ListItemSecondaryAction>
+                                </ListItem>
+                            ))}
+                        </List>
+                    </Paper>
+                )}
+
                 {/* Sharing Section */}
                 <Paper sx={{ p: 3, borderRadius: 3 }}>
                     <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
                         Sharing
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        Share your applications with friends. They'll get read-only access.
+                        Share your applications with friends. They'll receive an invitation to accept.
                     </Typography>
 
                     {/* Search to add */}
                     <TextField
                         fullWidth
                         size="small"
-                        placeholder="Search by email to add..."
+                        placeholder="Enter full email address to find user..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         slotProps={{
@@ -253,14 +415,16 @@ export default function SettingsView() {
                                             secondaryTypographyProps={{ variant: 'caption' }}
                                         />
                                         <ListItemSecondaryAction>
-                                            <IconButton
-                                                edge="end"
-                                                size="small"
-                                                color="primary"
-                                                onClick={() => handleAddShare(result)}
-                                            >
-                                                <PersonAddIcon fontSize="small" />
-                                            </IconButton>
+                                            <Tooltip title="Send invitation">
+                                                <IconButton
+                                                    edge="end"
+                                                    size="small"
+                                                    color="primary"
+                                                    onClick={() => handleAddShare(result)}
+                                                >
+                                                    <PersonAddIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
                                         </ListItemSecondaryAction>
                                     </ListItem>
                                 ))}
@@ -268,15 +432,89 @@ export default function SettingsView() {
                         </Paper>
                     )}
 
-                    {searchQuery.length > 0 && searchQuery.length < 3 && (
+                    {searchQuery.length > 0 && !isValidEmail(searchQuery) && (
                         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-                            Type at least 3 characters to search
+                            Enter a complete email address (e.g. user@example.com)
                         </Typography>
+                    )}
+
+                    {/* Pending invites sent by me */}
+                    {pendingShares.length > 0 && (
+                        <>
+                            <Divider sx={{ my: 2 }} />
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                                    Pending Invitations
+                                </Typography>
+                                <Chip
+                                    label={pendingShares.length}
+                                    size="small"
+                                    color="warning"
+                                    sx={{ fontWeight: 700, height: 20, fontSize: '0.7rem' }}
+                                />
+                            </Box>
+
+                            <List disablePadding>
+                                {pendingShares.map((share) => (
+                                    <ListItem
+                                        key={share._id}
+                                        sx={{
+                                            py: 1.5,
+                                            px: 1,
+                                            borderRadius: 2,
+                                            '&:hover': { bgcolor: 'action.hover' },
+                                        }}
+                                    >
+                                        <ListItemAvatar>
+                                            <Avatar
+                                                sx={{
+                                                    width: 36,
+                                                    height: 36,
+                                                    bgcolor: 'grey.400',
+                                                }}
+                                            >
+                                                {(share.sharedWithName || share.sharedWithEmail)
+                                                    .charAt(0)
+                                                    .toUpperCase()}
+                                            </Avatar>
+                                        </ListItemAvatar>
+                                        <ListItemText
+                                            primary={share.sharedWithName || share.sharedWithEmail}
+                                            secondary={
+                                                <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
+                                                    {share.sharedWithEmail}
+                                                    <Chip
+                                                        icon={<HourglassTopIcon sx={{ fontSize: '14px !important' }} />}
+                                                        label="Awaiting response"
+                                                        size="small"
+                                                        color="warning"
+                                                        variant="outlined"
+                                                        sx={{ ml: 1, height: 20, fontSize: '0.7rem' }}
+                                                    />
+                                                </Box>
+                                            }
+                                            primaryTypographyProps={{ fontWeight: 600, variant: 'body2' }}
+                                        />
+                                        <ListItemSecondaryAction>
+                                            <Tooltip title="Cancel invitation">
+                                                <IconButton
+                                                    size="small"
+                                                    color="error"
+                                                    onClick={() => handleDeleteShare(share)}
+                                                >
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </ListItemSecondaryAction>
+                                    </ListItem>
+                                ))}
+                            </List>
+                        </>
                     )}
 
                     <Divider sx={{ my: 2 }} />
 
-                    {/* Current shares */}
+                    {/* Accepted shares */}
                     <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
                         People you're sharing with
                     </Typography>
@@ -285,13 +523,13 @@ export default function SettingsView() {
                         <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
                             <CircularProgress size={24} />
                         </Box>
-                    ) : shares.length === 0 ? (
+                    ) : acceptedShares.length === 0 ? (
                         <Alert severity="info" sx={{ borderRadius: 2 }}>
-                            You haven't shared your applications with anyone yet. Search by email above to add someone.
+                            You haven't shared your applications with anyone yet. Search by email above to send an invitation.
                         </Alert>
                     ) : (
                         <List disablePadding>
-                            {shares.map((share) => (
+                            {acceptedShares.map((share) => (
                                 <ListItem
                                     key={share._id}
                                     sx={{
@@ -348,6 +586,57 @@ export default function SettingsView() {
                         </List>
                     )}
                 </Paper>
+
+                {/* People sharing with me (accepted, manageable) */}
+                {!receivedLoading && receivedShares.length > 0 && (
+                    <Paper sx={{ p: 3, mt: 3, borderRadius: 3 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
+                            People sharing with you
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                            These users are sharing their applications with you. Remove to stop seeing their data.
+                        </Typography>
+
+                        <List disablePadding>
+                            {receivedShares.map((share) => (
+                                <ListItem
+                                    key={share._id}
+                                    sx={{
+                                        py: 1.5,
+                                        px: 1,
+                                        borderRadius: 2,
+                                        '&:hover': { bgcolor: 'action.hover' },
+                                    }}
+                                >
+                                    <ListItemAvatar>
+                                        <Avatar sx={{ width: 36, height: 36, bgcolor: 'primary.main' }}>
+                                            {(share.ownerName || share.ownerEmail)
+                                                .charAt(0)
+                                                .toUpperCase()}
+                                        </Avatar>
+                                    </ListItemAvatar>
+                                    <ListItemText
+                                        primary={share.ownerName || share.ownerEmail}
+                                        secondary={share.ownerEmail}
+                                        primaryTypographyProps={{ fontWeight: 600, variant: 'body2' }}
+                                        secondaryTypographyProps={{ variant: 'caption' }}
+                                    />
+                                    <ListItemSecondaryAction>
+                                        <Tooltip title="Stop viewing their applications">
+                                            <IconButton
+                                                size="small"
+                                                color="error"
+                                                onClick={() => handleRemoveReceivedShare(share)}
+                                            >
+                                                <VisibilityOffIcon fontSize="small" />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </ListItemSecondaryAction>
+                                </ListItem>
+                            ))}
+                        </List>
+                    </Paper>
+                )}
             </Container>
 
             {/* Edit Share Dialog */}
