@@ -3,7 +3,7 @@ import { Container } from '@mui/material';
 import { shareService, type UserSearchResult, type Share } from '../services/sharingService';
 import { useApplications } from '../hooks/useApplications';
 import { useSnackbar } from '../hooks/useSnackbar';
-import { sharingReducer, initialSharingState } from '../components/settings/sharingReducer';
+import { sharingReducer, initialSharingState } from '../reducers/sharingReducer';
 import SharingSection from '../components/settings/SharingSection';
 import EditShareDialog from '../components/settings/EditShareDialog';
 

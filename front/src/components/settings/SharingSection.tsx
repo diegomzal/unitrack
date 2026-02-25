@@ -190,12 +190,13 @@ export default function SharingSection({
                             <ListItemText
                                 primary={share.sharedWithName || share.sharedWithEmail}
                                 secondary={
-                                    <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
+                                    <Box component="div" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
                                         {share.sharedWithEmail}
-                                        <Chip label={share.shareAll ? 'All apps' : `${share.applicationIds.length} app(s)`} size="small" variant="outlined" sx={{ ml: 1, height: 20, fontSize: '0.7rem' }} />
+                                        <Chip component="span" label={share.shareAll ? 'All apps' : `${share.applicationIds.length} app(s)`} size="small" variant="outlined" sx={{ ml: 1, height: 20, fontSize: '0.7rem' }} />
                                     </Box>
                                 }
                                 primaryTypographyProps={{ fontWeight: 600, variant: 'body2' }}
+                                secondaryTypographyProps={{ component: 'div' }}
                             />
                             <ListItemSecondaryAction>
                                 <Tooltip title="Configure sharing">
@@ -318,16 +319,10 @@ export default function SharingSection({
                                             </Avatar>
                                         </ListItemAvatar>
                                         <ListItemText
-                                            primary={
-                                                <Typography variant="body2" fontWeight={600}>
-                                                    {invitation.ownerName || invitation.ownerEmail}
-                                                </Typography>
-                                            }
-                                            secondary={
-                                                <Typography variant="caption" color="text.secondary">
-                                                    {invitation.ownerEmail} wants to share their applications with you
-                                                </Typography>
-                                            }
+                                            primary={invitation.ownerName || invitation.ownerEmail}
+                                            secondary={`${invitation.ownerEmail} wants to share their applications with you`}
+                                            primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
+                                            secondaryTypographyProps={{ variant: 'caption', color: 'text.secondary' }}
                                         />
                                         <ListItemSecondaryAction>
                                             <Tooltip title="Accept invitation">
@@ -380,12 +375,13 @@ export default function SharingSection({
                                 <ListItemText
                                     primary={share.sharedWithName || share.sharedWithEmail}
                                     secondary={
-                                        <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
+                                        <Box component="div" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
                                             {share.sharedWithEmail}
-                                            <Chip icon={<HourglassTopIcon sx={{ fontSize: '14px !important' }} />} label="Awaiting response" size="small" color="warning" variant="outlined" sx={{ ml: 1, height: 20, fontSize: '0.7rem' }} />
+                                            <Chip component="span" icon={<HourglassTopIcon sx={{ fontSize: '14px !important' }} />} label="Awaiting response" size="small" color="warning" variant="outlined" sx={{ ml: 1, height: 20, fontSize: '0.7rem' }} />
                                         </Box>
                                     }
                                     primaryTypographyProps={{ fontWeight: 600, variant: 'body2' }}
+                                    secondaryTypographyProps={{ component: 'div' }}
                                 />
                                 <ListItemSecondaryAction>
                                     <Tooltip title="Cancel invitation">

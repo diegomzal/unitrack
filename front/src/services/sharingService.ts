@@ -19,7 +19,7 @@ export interface UserSearchResult {
     photoURL: string;
 }
 
-export type ShareStatus = 'pending' | 'accepted' | 'rejected';
+type ShareStatus = 'pending' | 'accepted' | 'rejected';
 
 export interface Share {
     _id: string;

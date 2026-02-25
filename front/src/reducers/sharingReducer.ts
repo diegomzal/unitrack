@@ -1,6 +1,6 @@
-import { type Share } from '../../services/sharingService';
+import { type Share } from '../services/sharingService';
 
-export interface SharingState {
+interface SharingState {
     shares: Share[];
     sharesLoading: boolean;
     invitations: Share[];
@@ -18,7 +18,7 @@ export const initialSharingState: SharingState = {
     receivedLoading: true,
 };
 
-export type SharingAction =
+type SharingAction =
     | { type: 'FETCH_START'; payload: 'shares' | 'invitations' | 'received' }
     | { type: 'FETCH_SUCCESS'; payload: { kind: 'shares' | 'invitations' | 'received'; data: Share[] } }
     | { type: 'FETCH_ERROR'; payload: 'shares' | 'invitations' | 'received' };
