@@ -86,7 +86,7 @@ export default function CalendarView() {
     }, [applications]);
 
     // Calendar grid info
-    const { weeks, calendarDays } = useMemo(() => {
+    const { weeks } = useMemo(() => {
         const monthStart = startOfMonth(currentMonth);
         const monthEnd = endOfMonth(currentMonth);
         const gridStart = startOfWeek(monthStart);
@@ -98,7 +98,7 @@ export default function CalendarView() {
         for (let i = 0; i < days.length; i += 7) {
             wks.push(days.slice(i, i + 7));
         }
-        return { weeks: wks, calendarDays: days };
+        return { weeks: wks };
     }, [currentMonth]);
 
     // Compute event segments for each week (for continuous date-range rendering)
