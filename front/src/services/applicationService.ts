@@ -1,7 +1,7 @@
 import { auth } from '../config/firebase';
 import type { Application, ApplicationFormData } from '../types/application';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 /**
  * Helper to get auth headers with the current user's ID token.
