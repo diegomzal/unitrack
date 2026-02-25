@@ -5,11 +5,17 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Import routes
+const applicationRoutes = require('./routes/applications');
+
 // Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Basic Route
+// Main API Routes
+app.use('/api/applications', applicationRoutes);
+
+// Basic Route for testing
 app.get('/', (req, res) => {
     res.json({ message: 'Welcome to UniTrack API' });
 });

@@ -1,74 +1,61 @@
 import type { Application, ApplicationFormData } from '../types/application';
 
-const STORAGE_KEY = 'unitrack_applications';
-
-// Temporary local storage based service until backend API is ready
-// TODO: Replace with actual API calls to the Express backend
-
-const generateId = (): string => {
-    return Date.now().toString(36) + Math.random().toString(36).substring(2);
-};
-
-const getStoredApplications = (): Application[] => {
-    try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        return stored ? JSON.parse(stored) : [];
-    } catch {
-        return [];
-    }
-};
-
-const saveApplications = (applications: Application[]): void => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(applications));
-};
+// We use the local API URL, assuming that backend is running on 3000.
+// Use environment variables in production.
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export const applicationService = {
     getAll: async (): Promise<Application[]> => {
-        return getStoredApplications();
+        const response = await fetch(`${API_URL}/applications`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch applications');
+        }
+        return response.json();
     },
 
     getById: async (id: string): Promise<Application | undefined> => {
-        const applications = getStoredApplications();
-        return applications.find((app) => app._id === id);
+        const response = await fetch(`${API_URL}/applications/${id}`);
+        if (!response.ok) {
+            if (response.status === 404) return undefined;
+            throw new Error(`Failed to fetch application with id ${id}`);
+        }
+        return response.json();
     },
 
     create: async (data: ApplicationFormData): Promise<Application> => {
-        const applications = getStoredApplications();
-        const now = new Date().toISOString();
-        const newApplication: Application = {
-            _id: generateId(),
-            userId: 'local-user',
-            ...data,
-            createdAt: now,
-            updatedAt: now,
-        };
-        applications.push(newApplication);
-        saveApplications(applications);
-        return newApplication;
+        const response = await fetch(`${API_URL}/applications`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) {
+            throw new Error('Failed to create application');
+        }
+        return response.json();
     },
 
-    update: async (id: string, data: ApplicationFormData): Promise<Application> => {
-        const applications = getStoredApplications();
-        const index = applications.findIndex((app) => app._id === id);
-        if (index === -1) {
-            throw new Error(`Application with id ${id} not found`);
+    update: async (id: string, data: Partial<ApplicationFormData>): Promise<Application> => {
+        const response = await fetch(`${API_URL}/applications/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to update application with id ${id}`);
         }
-        const updated: Application = {
-            ...applications[index],
-            ...data,
-            updatedAt: new Date().toISOString(),
-        };
-        applications[index] = updated;
-        saveApplications(applications);
-        return updated;
+        return response.json();
     },
 
     delete: async (id: string): Promise<void> => {
-        const applications = getStoredApplications();
-        const filtered = applications.filter((app) => app._id !== id);
-        if (filtered.length === applications.length) {
-            throw new Error(`Application with id ${id} not found`);
+        const response = await fetch(`${API_URL}/applications/${id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to delete application with id ${id}`);
         }
-        saveApplications(filtered);
     },
 };
