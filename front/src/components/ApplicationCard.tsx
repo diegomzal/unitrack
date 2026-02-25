@@ -20,7 +20,6 @@ import EventIcon from '@mui/icons-material/Event';
 import FlagIcon from '@mui/icons-material/Flag';
 import DateRangeIcon from '@mui/icons-material/DateRange';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import ChecklistIcon from '@mui/icons-material/Checklist';
 import { useState } from 'react';
 import type { Application, ApplicationEvent } from '../types/application';
@@ -178,7 +177,6 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onEdit, 
 
                         {formattedAnnualCost && (
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                <AttachMoneyIcon sx={{ fontSize: 14, color: 'primary.light' }} />
                                 <Typography variant="caption" color="primary.light" fontWeight={600}>
                                     {formattedAnnualCost}
                                 </Typography>
