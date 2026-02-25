@@ -39,3 +39,4 @@ jobs:
           region: ${{ env.REGION }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           source: .
+          flags: '--allow-unauthenticated' # TODO: remove when Firebase Auth middleware is implemented
