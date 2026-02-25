@@ -43,7 +43,8 @@ interface ApplicationDetailsDialogProps {
     open: boolean;
     application: Application | null;
     onClose: () => void;
-    onSave: (id: string, data: ApplicationFormData) => Promise<void>;
+    onSave?: (id: string, data: ApplicationFormData) => Promise<void>;
+    readOnly?: boolean;
 }
 
 const generateId = (): string =>
@@ -612,6 +613,7 @@ const ApplicationDetailsDialog: React.FC<ApplicationDetailsDialogProps> = ({
     application,
     onClose,
     onSave,
+    readOnly,
 }) => {
     const theme = useTheme();
     const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
@@ -649,7 +651,7 @@ const ApplicationDetailsDialog: React.FC<ApplicationDetailsDialogProps> = ({
     }, []);
 
     const handleSave = async () => {
-        if (!application || !dirty) {
+        if (readOnly || !application || !dirty || !onSave) {
             onClose();
             return;
         }

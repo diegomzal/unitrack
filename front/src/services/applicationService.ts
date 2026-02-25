@@ -1,12 +1,27 @@
+import { auth } from '../config/firebase';
 import type { Application, ApplicationFormData } from '../types/application';
 
-// We use the local API URL, assuming that backend is running on 3000.
-// Use environment variables in production.
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+/**
+ * Helper to get auth headers with the current user's ID token.
+ */
+const getAuthHeaders = async (): Promise<HeadersInit> => {
+    const user = auth.currentUser;
+    if (!user) {
+        throw new Error('Not authenticated');
+    }
+    const token = await user.getIdToken();
+    return {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+    };
+};
 
 export const applicationService = {
     getAll: async (): Promise<Application[]> => {
-        const response = await fetch(`${API_URL}/applications`);
+        const headers = await getAuthHeaders();
+        const response = await fetch(`${API_URL}/applications`, { headers });
         if (!response.ok) {
             throw new Error('Failed to fetch applications');
         }
@@ -14,7 +29,8 @@ export const applicationService = {
     },
 
     getById: async (id: string): Promise<Application | undefined> => {
-        const response = await fetch(`${API_URL}/applications/${id}`);
+        const headers = await getAuthHeaders();
+        const response = await fetch(`${API_URL}/applications/${id}`, { headers });
         if (!response.ok) {
             if (response.status === 404) return undefined;
             throw new Error(`Failed to fetch application with id ${id}`);
@@ -23,11 +39,10 @@ export const applicationService = {
     },
 
     create: async (data: ApplicationFormData): Promise<Application> => {
+        const headers = await getAuthHeaders();
         const response = await fetch(`${API_URL}/applications`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers,
             body: JSON.stringify(data),
         });
         if (!response.ok) {
@@ -37,11 +52,10 @@ export const applicationService = {
     },
 
     update: async (id: string, data: Partial<ApplicationFormData>): Promise<Application> => {
+        const headers = await getAuthHeaders();
         const response = await fetch(`${API_URL}/applications/${id}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers,
             body: JSON.stringify(data),
         });
         if (!response.ok) {
@@ -51,8 +65,10 @@ export const applicationService = {
     },
 
     delete: async (id: string): Promise<void> => {
+        const headers = await getAuthHeaders();
         const response = await fetch(`${API_URL}/applications/${id}`, {
             method: 'DELETE',
+            headers,
         });
         if (!response.ok) {
             throw new Error(`Failed to delete application with id ${id}`);

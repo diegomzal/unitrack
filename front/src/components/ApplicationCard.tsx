@@ -30,12 +30,13 @@ import { getCountryByCode } from '../data/countries';
 
 interface ApplicationCardProps {
     application: Application;
-    onEdit: (application: Application) => void;
-    onDelete: (id: string) => void;
+    onEdit?: (application: Application) => void;
+    onDelete?: (id: string) => void;
     onOpenDetails: (application: Application) => void;
+    readOnly?: boolean;
 }
 
-const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onEdit, onDelete, onOpenDetails }) => {
+const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onEdit, onDelete, onOpenDetails, readOnly }) => {
     const [expanded, setExpanded] = useState(false);
 
     const country = application.country ? getCountryByCode(application.country) : null;
@@ -212,24 +213,28 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onEdit, 
                                 <InfoOutlinedIcon fontSize="small" />
                             </IconButton>
                         </Tooltip>
-                        <Tooltip title="Edit">
-                            <IconButton
-                                size="small"
-                                onClick={() => onEdit(application)}
-                                sx={{ color: 'primary.light', bgcolor: 'primary.50', '&:hover': { bgcolor: 'primary.100' } }}
-                            >
-                                <EditIcon fontSize="small" />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Delete">
-                            <IconButton
-                                size="small"
-                                onClick={() => onDelete(application._id)}
-                                sx={{ color: 'error.main', bgcolor: 'error.50', '&:hover': { bgcolor: 'error.100' } }}
-                            >
-                                <DeleteIcon fontSize="small" />
-                            </IconButton>
-                        </Tooltip>
+                        {!readOnly && onEdit && (
+                            <Tooltip title="Edit">
+                                <IconButton
+                                    size="small"
+                                    onClick={() => onEdit(application)}
+                                    sx={{ color: 'primary.light', bgcolor: 'primary.50', '&:hover': { bgcolor: 'primary.100' } }}
+                                >
+                                    <EditIcon fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                        )}
+                        {!readOnly && onDelete && (
+                            <Tooltip title="Delete">
+                                <IconButton
+                                    size="small"
+                                    onClick={() => onDelete(application._id)}
+                                    sx={{ color: 'error.main', bgcolor: 'error.50', '&:hover': { bgcolor: 'error.100' } }}
+                                >
+                                    <DeleteIcon fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                        )}
                     </Box>
                     <IconButton
                         size="small"

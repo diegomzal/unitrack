@@ -1,13 +1,16 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Box, Tabs, Tab } from '@mui/material';
+import { AppBar, Toolbar, Typography, Box, Tabs, Tab, Avatar, Tooltip } from '@mui/material';
 import SchoolIcon from '@mui/icons-material/School';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ChecklistIcon from '@mui/icons-material/Checklist';
+import PeopleIcon from '@mui/icons-material/People';
 import SettingsIcon from '@mui/icons-material/Settings';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function MainLayout() {
     const navigate = useNavigate();
     const location = useLocation();
+    const { user } = useAuth();
 
     // Map root path to applications for tab selection
     const currentTab = location.pathname === '/' ? '/applications' : location.pathname;
@@ -54,6 +57,14 @@ export default function MainLayout() {
                             sx={{ textTransform: 'none', fontWeight: 600 }}
                         />
                         <Tab
+                            key="shared"
+                            icon={<PeopleIcon />}
+                            iconPosition="start"
+                            label="Shared"
+                            value="/shared"
+                            sx={{ textTransform: 'none', fontWeight: 600 }}
+                        />
+                        <Tab
                             key="calendar"
                             icon={<CalendarMonthIcon />}
                             iconPosition="start"
@@ -70,6 +81,22 @@ export default function MainLayout() {
                             sx={{ textTransform: 'none', fontWeight: 600 }}
                         />
                     </Tabs>
+                    <Tooltip title={user?.email || ''}>
+                        <Avatar
+                            src={user?.photoURL || undefined}
+                            sx={{
+                                width: 32,
+                                height: 32,
+                                ml: 1,
+                                cursor: 'pointer',
+                                border: '2px solid',
+                                borderColor: 'primary.main',
+                            }}
+                            onClick={() => navigate('/settings')}
+                        >
+                            {user?.displayName?.charAt(0) || user?.email?.charAt(0) || '?'}
+                        </Avatar>
+                    </Tooltip>
                 </Toolbar>
             </AppBar>
             <Box sx={{ display: 'flex', flex: 1, flexDirection: 'column', bgcolor: 'background.default' }}>

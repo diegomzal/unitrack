@@ -11,7 +11,10 @@ const checkDb = (res) => {
 exports.getAll = async (req, res) => {
     if (!checkDb(res)) return;
     try {
-        const snapshot = await db.collection('applications').get();
+        const snapshot = await db.collection('applications')
+            .where('userId', '==', req.user.uid)
+            .get();
+
         const applications = [];
         snapshot.forEach(doc => {
             applications.push({ _id: doc.id, ...doc.data() });
@@ -31,7 +34,14 @@ exports.getById = async (req, res) => {
         if (!result.exists) {
             return res.status(404).json({ error: "Application not found" });
         }
-        res.status(200).json({ _id: result.id, ...result.data() });
+
+        const data = result.data();
+        // Only the owner can access their own application via this endpoint
+        if (data.userId !== req.user.uid) {
+            return res.status(403).json({ error: "Not authorized to access this application" });
+        }
+
+        res.status(200).json({ _id: result.id, ...data });
     } catch (error) {
         console.error("Error getting application by id:", error);
         res.status(500).json({ error: "Failed to fetch application" });
@@ -42,10 +52,9 @@ exports.create = async (req, res) => {
     if (!checkDb(res)) return;
     try {
         const data = req.body;
-        // ensure default fields 
         const now = new Date().toISOString();
         const newApplication = {
-            userId: data.userId || 'local-user', // hardcoded for now until auth is built
+            userId: req.user.uid,
             title: data.title || '',
             description: data.description || '',
             university: data.university || '',
@@ -73,21 +82,33 @@ exports.update = async (req, res) => {
     if (!checkDb(res)) return;
     try {
         const { id } = req.params;
+        const docRef = db.collection('applications').doc(id);
+        const existing = await docRef.get();
+
+        if (!existing.exists) {
+            return res.status(404).json({ error: "Application not found" });
+        }
+
+        // Only the owner can update
+        if (existing.data().userId !== req.user.uid) {
+            return res.status(403).json({ error: "Not authorized to update this application" });
+        }
+
         const updates = req.body;
         const now = new Date().toISOString();
 
-        // Remove immutable fields if passing a full object
+        // Remove immutable fields
         delete updates._id;
+        delete updates.userId;
 
         const updatedData = {
             ...updates,
             updatedAt: now,
         };
 
-        await db.collection('applications').doc(id).update(updatedData);
+        await docRef.update(updatedData);
 
-        // Fetch updated doc to return
-        const result = await db.collection('applications').doc(id).get();
+        const result = await docRef.get();
         res.status(200).json({ _id: result.id, ...result.data() });
     } catch (error) {
         console.error("Error updating application:", error);
@@ -99,7 +120,19 @@ exports.delete = async (req, res) => {
     if (!checkDb(res)) return;
     try {
         const { id } = req.params;
-        await db.collection('applications').doc(id).delete();
+        const docRef = db.collection('applications').doc(id);
+        const existing = await docRef.get();
+
+        if (!existing.exists) {
+            return res.status(404).json({ error: "Application not found" });
+        }
+
+        // Only the owner can delete
+        if (existing.data().userId !== req.user.uid) {
+            return res.status(403).json({ error: "Not authorized to delete this application" });
+        }
+
+        await docRef.delete();
         res.status(200).json({ message: "Application deleted successfully" });
     } catch (error) {
         console.error("Error deleting application:", error);
