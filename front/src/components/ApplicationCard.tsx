@@ -23,7 +23,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ChecklistIcon from '@mui/icons-material/Checklist';
 import { useState } from 'react';
 import type { Application, ApplicationEvent } from '../types/application';
-import { EVENT_TYPE_LABELS } from '../types/application';
+import { EVENT_TYPE_LABELS, DEFAULT_REQUIREMENT_COLUMNS } from '../types/application';
 import StatusChip from './StatusChip';
 import { getCountryByCode } from '../data/countries';
 
@@ -53,7 +53,9 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onEdit, 
 
     const events: ApplicationEvent[] = application.events ?? [];
     const requirements = application.requirements ?? [];
-    const completedReqs = requirements.filter((r) => r.completed).length;
+    const reqColumns = application.requirementColumns?.length ? application.requirementColumns : [...DEFAULT_REQUIREMENT_COLUMNS];
+    const lastColId = reqColumns.length > 0 ? reqColumns[reqColumns.length - 1].id : null;
+    const completedReqs = requirements.filter((r) => r.column === lastColId || (!r.column && r.completed)).length;
     const reqProgress = requirements.length > 0 ? (completedReqs / requirements.length) * 100 : 0;
 
     const costs = application.costs;
@@ -377,35 +379,38 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onEdit, 
                                     Requirements ({completedReqs}/{requirements.length})
                                 </Typography>
                                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                    {requirements.map((req) => (
-                                        <Box
-                                            key={req.id}
-                                            sx={{
-                                                display: 'flex', alignItems: 'center', gap: 1,
-                                                py: 0.5, px: 1, borderRadius: 1.5,
-                                                bgcolor: req.completed ? 'rgba(34, 197, 94, 0.06)' : 'transparent',
-                                            }}
-                                        >
+                                    {requirements.map((req) => {
+                                        const isInLastCol = req.column === lastColId || (!req.column && req.completed);
+                                        return (
                                             <Box
+                                                key={req.id}
                                                 sx={{
-                                                    width: 8, height: 8, borderRadius: '50%',
-                                                    bgcolor: req.completed ? 'success.main' : 'text.secondary',
-                                                    opacity: req.completed ? 1 : 0.4,
-                                                    flexShrink: 0,
-                                                }}
-                                            />
-                                            <Typography
-                                                variant="body2"
-                                                sx={{
-                                                    flex: 1,
-                                                    textDecoration: req.completed ? 'line-through' : 'none',
-                                                    color: req.completed ? 'text.secondary' : 'text.primary',
+                                                    display: 'flex', alignItems: 'center', gap: 1,
+                                                    py: 0.5, px: 1, borderRadius: 1.5,
+                                                    bgcolor: isInLastCol ? 'rgba(34, 197, 94, 0.06)' : 'transparent',
                                                 }}
                                             >
-                                                {req.title}
-                                            </Typography>
-                                        </Box>
-                                    ))}
+                                                <Box
+                                                    sx={{
+                                                        width: 8, height: 8, borderRadius: '50%',
+                                                        bgcolor: isInLastCol ? 'success.main' : 'text.secondary',
+                                                        opacity: isInLastCol ? 1 : 0.4,
+                                                        flexShrink: 0,
+                                                    }}
+                                                />
+                                                <Typography
+                                                    variant="body2"
+                                                    sx={{
+                                                        flex: 1,
+                                                        textDecoration: isInLastCol ? 'line-through' : 'none',
+                                                        color: isInLastCol ? 'text.secondary' : 'text.primary',
+                                                    }}
+                                                >
+                                                    {req.title}
+                                                </Typography>
+                                            </Box>
+                                        );
+                                    })}
                                 </Box>
                             </Box>
                         )}

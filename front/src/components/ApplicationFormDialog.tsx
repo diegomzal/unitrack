@@ -22,6 +22,7 @@ import {
     APPLICATION_STATUSES,
     EMPTY_FORM_DATA,
     EMPTY_COSTS,
+    DEFAULT_REQUIREMENT_COLUMNS,
     type Application,
     type ApplicationFormData,
     type ApplicationLink,
@@ -95,6 +96,9 @@ const ApplicationFormDialog: React.FC<ApplicationFormDialogProps> = ({
                     links: parsedLinks,
                     events: application.events ?? [],
                     requirements: application.requirements ?? [],
+                    requirementColumns: application.requirementColumns?.length
+                        ? application.requirementColumns
+                        : [...DEFAULT_REQUIREMENT_COLUMNS],
                     costs: application.costs ?? { ...EMPTY_COSTS },
                     notes: application.notes,
                     status: application.status,

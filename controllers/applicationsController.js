@@ -63,6 +63,10 @@ exports.create = async (req, res) => {
             links: data.links || [],
             events: data.events || [],
             requirements: data.requirements || [],
+            requirementColumns: data.requirementColumns || [
+                { id: 'todo', title: 'To Do' },
+                { id: 'done', title: 'Done' },
+            ],
             costs: data.costs || { tuitionFeePerYear: null, livingCostPerYear: null, scholarshipInfo: '' },
             notes: data.notes || '',
             status: data.status || 'Not started',

@@ -45,10 +45,21 @@ export interface ApplicationEvent {
     color: string;
 }
 
+export interface RequirementColumn {
+    id: string;
+    title: string;
+}
+
+export const DEFAULT_REQUIREMENT_COLUMNS: RequirementColumn[] = [
+    { id: 'todo', title: 'To Do' },
+    { id: 'done', title: 'Done' },
+];
+
 export interface ApplicationRequirement {
     id: string;
     title: string;
-    completed: boolean;
+    column: string;     // column id
+    completed?: boolean; // legacy field for backward compat
 }
 
 export interface ApplicationCosts {
@@ -68,6 +79,7 @@ export interface Application {
     links: ApplicationLink[];
     events: ApplicationEvent[];
     requirements: ApplicationRequirement[];
+    requirementColumns: RequirementColumn[];
     costs: ApplicationCosts;
     notes: string;
     status: ApplicationStatus;
@@ -92,6 +104,7 @@ export const EMPTY_FORM_DATA: ApplicationFormData = {
     links: [],
     events: [],
     requirements: [],
+    requirementColumns: [...DEFAULT_REQUIREMENT_COLUMNS],
     costs: { ...EMPTY_COSTS },
     notes: '',
     status: 'Not started',
