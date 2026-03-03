@@ -7,6 +7,7 @@ import {
     Button,
     Chip,
     IconButton,
+    Tooltip,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -14,6 +15,7 @@ import EventIcon from '@mui/icons-material/Event';
 import DateRangeIcon from '@mui/icons-material/DateRange';
 import FlagIcon from '@mui/icons-material/Flag';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import PaletteIcon from '@mui/icons-material/Palette';
 
 import {
     EVENT_TYPES,
@@ -105,16 +107,8 @@ const EventsTab: React.FC<EventsTabProps> = ({ events, onChange, readOnly }) => 
                         Add new event
                     </Typography>
 
-                    <TextField
-                        size="small"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder="Event title (e.g., Application deadline)"
-                        fullWidth
-                    />
-
-                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+                    {/* Row 1 */}
+                    <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start', flexWrap: 'wrap' }}>
                         <TextField
                             select
                             size="small"
@@ -123,7 +117,7 @@ const EventsTab: React.FC<EventsTabProps> = ({ events, onChange, readOnly }) => 
                                 setType(e.target.value as ApplicationEventType);
                                 if (e.target.value !== 'date-range') setEndDate('');
                             }}
-                            sx={{ width: { xs: '100%', sm: 140 } }}
+                            sx={{ width: { xs: '100%', sm: 160 } }}
                         >
                             {EVENT_TYPES.map((t) => (
                                 <MenuItem key={t} value={t}>
@@ -143,7 +137,7 @@ const EventsTab: React.FC<EventsTabProps> = ({ events, onChange, readOnly }) => 
                             onChange={(e) => setDate(e.target.value)}
                             onKeyDown={handleKeyDown}
                             slotProps={{ inputLabel: { shrink: true } }}
-                            sx={{ flex: 1, minWidth: 120 }}
+                            sx={{ flex: 1, minWidth: 130 }}
                         />
                         {type === 'date-range' && (
                             <TextField
@@ -157,27 +151,85 @@ const EventsTab: React.FC<EventsTabProps> = ({ events, onChange, readOnly }) => 
                                     inputLabel: { shrink: true },
                                     htmlInput: { min: date || undefined },
                                 }}
-                                sx={{ flex: 1, minWidth: 120 }}
+                                sx={{ flex: 1, minWidth: 130 }}
                             />
                         )}
-                        <Box sx={{ display: 'flex', gap: 0.4, alignItems: 'center' }}>
+
+                        <Box sx={{ display: 'flex', gap: 0.6, alignItems: 'center', flexWrap: 'wrap' }}>
                             {EVENT_COLORS.map((c) => (
                                 <Box
                                     key={c}
                                     onClick={() => setColor(c)}
                                     sx={{
-                                        width: 18,
-                                        height: 18,
+                                        width: 24,
+                                        height: 24,
                                         borderRadius: '50%',
                                         bgcolor: c,
                                         cursor: 'pointer',
-                                        border: color === c ? '2px solid #E8EAED' : '2px solid transparent',
-                                        transition: 'border-color 0.15s, transform 0.15s',
-                                        '&:hover': { transform: 'scale(1.2)' },
+                                        border: color === c ? '2px solid #fff' : '2px solid transparent',
+                                        boxShadow: color === c ? `0 0 0 1px ${c}` : 'none',
+                                        transition: 'all 0.15s',
+                                        '&:hover': { transform: 'scale(1.15)' },
                                     }}
                                 />
                             ))}
+                            <Tooltip title="Custom color">
+                                <Box
+                                    sx={{
+                                        width: 24,
+                                        height: 24,
+                                        borderRadius: '50%',
+                                        position: 'relative',
+                                        cursor: 'pointer',
+                                        bgcolor: !EVENT_COLORS.includes(color as any)
+                                            ? color
+                                            : 'rgba(0,0,0,0.04)',
+                                        border: !EVENT_COLORS.includes(color as any) ? '2px solid #fff' : '2px dashed rgba(0,0,0,0.2)',
+                                        boxShadow: !EVENT_COLORS.includes(color as any) ? `0 0 0 1px ${color}` : 'none',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        overflow: 'hidden',
+                                        transition: 'all 0.15s',
+                                        '&:hover': { transform: 'scale(1.15)', borderColor: 'rgba(0,0,0,0.4)' },
+                                    }}
+                                >
+                                    {EVENT_COLORS.includes(color as any) ? (
+                                        <PaletteIcon sx={{ fontSize: 13, color: 'text.secondary', zIndex: 1 }} />
+                                    ) : (
+                                        <PaletteIcon sx={{ fontSize: 13, color: '#fff', opacity: 0.6, zIndex: 1, mixBlendMode: 'difference' }} />
+                                    )}
+                                    <input
+                                        type="color"
+                                        value={EVENT_COLORS.includes(color as any) ? '#ffffff' : color}
+                                        onChange={(e) => setColor(e.target.value)}
+                                        style={{
+                                            position: 'absolute',
+                                            opacity: 0,
+                                            width: '200%',
+                                            height: '200%',
+                                            top: '-50%',
+                                            left: '-50%',
+                                            cursor: 'pointer',
+                                            zIndex: 2,
+                                        }}
+                                    />
+                                </Box>
+                            </Tooltip>
                         </Box>
+                    </Box>
+
+                    {/* Row 2 */}
+                    <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                        <TextField
+                            size="small"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Event title (e.g., Application deadline)"
+                            fullWidth
+                        />
+
                         <Button
                             variant="contained"
                             size="small"
@@ -190,6 +242,8 @@ const EventsTab: React.FC<EventsTabProps> = ({ events, onChange, readOnly }) => 
                                 textTransform: 'none',
                                 fontWeight: 600,
                                 borderRadius: 2,
+                                height: 40,
+                                px: 3,
                             }}
                         >
                             Add
