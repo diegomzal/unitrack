@@ -5,6 +5,7 @@ import { type ApplicationCosts } from '../../types/application';
 interface CostsTabProps {
     costs: ApplicationCosts;
     onChange: (costs: ApplicationCosts) => void;
+    readOnly?: boolean;
 }
 
 const formatCurrency = (value: number | null): string => {
@@ -17,7 +18,7 @@ const formatCurrency = (value: number | null): string => {
     }).format(value);
 };
 
-const CostsTab: React.FC<CostsTabProps> = ({ costs, onChange }) => {
+const CostsTab: React.FC<CostsTabProps> = ({ costs, onChange, readOnly }) => {
     const tuition = costs.tuitionFeePerYear ?? 0;
     const living = costs.livingCostPerYear ?? 0;
     const totalAnnual = tuition + living;
@@ -94,6 +95,7 @@ const CostsTab: React.FC<CostsTabProps> = ({ costs, onChange }) => {
                         startAdornment: (
                             <InputAdornment position="start">$</InputAdornment>
                         ),
+                        readOnly,
                     },
                 }}
             />
@@ -112,6 +114,7 @@ const CostsTab: React.FC<CostsTabProps> = ({ costs, onChange }) => {
                         startAdornment: (
                             <InputAdornment position="start">$</InputAdornment>
                         ),
+                        readOnly,
                     },
                 }}
             />
@@ -125,6 +128,9 @@ const CostsTab: React.FC<CostsTabProps> = ({ costs, onChange }) => {
                 rows={3}
                 fullWidth
                 placeholder="e.g., Merit-based scholarship up to 50%, need-based aid available..."
+                slotProps={{
+                    input: { readOnly },
+                }}
             />
         </Box>
     );

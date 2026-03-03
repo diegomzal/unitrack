@@ -213,12 +213,9 @@ const RequirementsTab: React.FC<RequirementsTabProps> = ({ requirements, columns
                                 border: '1px solid',
                                 borderColor: isOver ? `${accent}40` : 'divider',
                                 transition: 'all 0.25s ease',
-                                overflow: 'hidden',
                                 boxShadow: isOver ? `0 0 0 1px ${accent}20` : 'none',
                             }}
                         >
-                            {/* Color accent line */}
-                            <Box sx={{ height: 3, background: `linear-gradient(90deg, ${accent}, ${accent}80)`, flexShrink: 0 }} />
 
                             {/* Column header */}
                             <Box
@@ -226,7 +223,7 @@ const RequirementsTab: React.FC<RequirementsTabProps> = ({ requirements, columns
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: 0.75,
-                                    px: 1.5,
+                                    px: 2,
                                     py: 1.25,
                                     borderBottom: '1px solid',
                                     borderColor: 'divider',
@@ -293,6 +290,11 @@ const RequirementsTab: React.FC<RequirementsTabProps> = ({ requirements, columns
                                                 fontWeight: 700,
                                                 bgcolor: `${accent}18`,
                                                 color: accent,
+                                                flexShrink: 0,
+                                                '& .MuiChip-label': {
+                                                    px: 0.75,
+                                                    overflow: 'visible',
+                                                },
                                             }}
                                         />
                                     </Box>

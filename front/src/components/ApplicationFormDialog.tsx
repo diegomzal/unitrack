@@ -191,7 +191,20 @@ const ApplicationFormDialog: React.FC<ApplicationFormDialogProps> = ({
         if (!validate()) return;
         try {
             setSaving(true);
-            await onSave(formData);
+
+            let finalFormData = { ...formData };
+            const trimmedUrl = newLinkUrl.trim();
+            if (trimmedUrl) {
+                let finalUrl = trimmedUrl;
+                if (!/^https?:\/\//i.test(finalUrl)) {
+                    finalUrl = `https://${finalUrl}`;
+                }
+                const trimmedName = newLinkName.trim() || trimmedUrl;
+                const newLink: ApplicationLink = { name: trimmedName, url: finalUrl };
+                finalFormData.links = [...finalFormData.links, newLink];
+            }
+
+            await onSave(finalFormData);
             onClose();
         } catch (err) {
             console.error('Failed to save application:', err);

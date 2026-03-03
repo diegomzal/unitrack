@@ -246,13 +246,13 @@ const ApplicationDetailsDialog: React.FC<ApplicationDetailsDialogProps> = ({
 
             <DialogContent sx={{ pt: '16px !important', px: 3, pb: 3 }}>
                 {tab === 0 && (
-                    <EventsTab events={events} onChange={handleEventsChange} />
+                    <EventsTab events={events} onChange={handleEventsChange} readOnly={readOnly} />
                 )}
                 {tab === 1 && (
                     <RequirementsTab requirements={requirements} columns={requirementColumns} onChange={handleRequirementsChange} readOnly={readOnly} />
                 )}
                 {tab === 2 && (
-                    <CostsTab costs={costs} onChange={handleCostsChange} />
+                    <CostsTab costs={costs} onChange={handleCostsChange} readOnly={readOnly} />
                 )}
             </DialogContent>
 

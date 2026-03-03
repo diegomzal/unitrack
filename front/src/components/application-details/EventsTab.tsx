@@ -46,9 +46,10 @@ const formatEventDate = (date: string): string => {
 interface EventsTabProps {
     events: ApplicationEvent[];
     onChange: (events: ApplicationEvent[]) => void;
+    readOnly?: boolean;
 }
 
-const EventsTab: React.FC<EventsTabProps> = ({ events, onChange }) => {
+const EventsTab: React.FC<EventsTabProps> = ({ events, onChange, readOnly }) => {
     const [title, setTitle] = useState('');
     const [type, setType] = useState<ApplicationEventType>('deadline');
     const [date, setDate] = useState('');
@@ -87,113 +88,115 @@ const EventsTab: React.FC<EventsTabProps> = ({ events, onChange }) => {
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {/* Add form */}
-            <Box
-                sx={{
-                    p: 2,
-                    borderRadius: 2.5,
-                    bgcolor: 'rgba(59, 130, 246, 0.04)',
-                    border: '1px dashed',
-                    borderColor: 'rgba(59, 130, 246, 0.2)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 1.5,
-                }}
-            >
-                <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    Add new event
-                </Typography>
-
-                <TextField
-                    size="small"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Event title (e.g., Application deadline)"
-                    fullWidth
-                />
-
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <TextField
-                        select
-                        size="small"
-                        value={type}
-                        onChange={(e) => {
-                            setType(e.target.value as ApplicationEventType);
-                            if (e.target.value !== 'date-range') setEndDate('');
-                        }}
-                        sx={{ width: { xs: '100%', sm: 140 } }}
-                    >
-                        {EVENT_TYPES.map((t) => (
-                            <MenuItem key={t} value={t}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    {getEventIcon(t, 14)}
-                                    {EVENT_TYPE_LABELS[t]}
-                                </Box>
-                            </MenuItem>
-                        ))}
-                    </TextField>
+            {!readOnly && (
+                <Box
+                    sx={{
+                        p: 2,
+                        borderRadius: 2.5,
+                        bgcolor: 'rgba(59, 130, 246, 0.04)',
+                        border: '1px dashed',
+                        borderColor: 'rgba(59, 130, 246, 0.2)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 1.5,
+                    }}
+                >
+                    <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                        Add new event
+                    </Typography>
 
                     <TextField
                         size="small"
-                        type="date"
-                        label={type === 'date-range' ? 'Start' : 'Date'}
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        slotProps={{ inputLabel: { shrink: true } }}
-                        sx={{ flex: 1, minWidth: 120 }}
+                        placeholder="Event title (e.g., Application deadline)"
+                        fullWidth
                     />
-                    {type === 'date-range' && (
+
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <TextField
+                            select
+                            size="small"
+                            value={type}
+                            onChange={(e) => {
+                                setType(e.target.value as ApplicationEventType);
+                                if (e.target.value !== 'date-range') setEndDate('');
+                            }}
+                            sx={{ width: { xs: '100%', sm: 140 } }}
+                        >
+                            {EVENT_TYPES.map((t) => (
+                                <MenuItem key={t} value={t}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        {getEventIcon(t, 14)}
+                                        {EVENT_TYPE_LABELS[t]}
+                                    </Box>
+                                </MenuItem>
+                            ))}
+                        </TextField>
+
                         <TextField
                             size="small"
                             type="date"
-                            label="End"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
+                            label={type === 'date-range' ? 'Start' : 'Date'}
+                            value={date}
+                            onChange={(e) => setDate(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            slotProps={{
-                                inputLabel: { shrink: true },
-                                htmlInput: { min: date || undefined },
-                            }}
+                            slotProps={{ inputLabel: { shrink: true } }}
                             sx={{ flex: 1, minWidth: 120 }}
                         />
-                    )}
-                    <Box sx={{ display: 'flex', gap: 0.4, alignItems: 'center' }}>
-                        {EVENT_COLORS.map((c) => (
-                            <Box
-                                key={c}
-                                onClick={() => setColor(c)}
-                                sx={{
-                                    width: 18,
-                                    height: 18,
-                                    borderRadius: '50%',
-                                    bgcolor: c,
-                                    cursor: 'pointer',
-                                    border: color === c ? '2px solid #E8EAED' : '2px solid transparent',
-                                    transition: 'border-color 0.15s, transform 0.15s',
-                                    '&:hover': { transform: 'scale(1.2)' },
+                        {type === 'date-range' && (
+                            <TextField
+                                size="small"
+                                type="date"
+                                label="End"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                slotProps={{
+                                    inputLabel: { shrink: true },
+                                    htmlInput: { min: date || undefined },
                                 }}
+                                sx={{ flex: 1, minWidth: 120 }}
                             />
-                        ))}
+                        )}
+                        <Box sx={{ display: 'flex', gap: 0.4, alignItems: 'center' }}>
+                            {EVENT_COLORS.map((c) => (
+                                <Box
+                                    key={c}
+                                    onClick={() => setColor(c)}
+                                    sx={{
+                                        width: 18,
+                                        height: 18,
+                                        borderRadius: '50%',
+                                        bgcolor: c,
+                                        cursor: 'pointer',
+                                        border: color === c ? '2px solid #E8EAED' : '2px solid transparent',
+                                        transition: 'border-color 0.15s, transform 0.15s',
+                                        '&:hover': { transform: 'scale(1.2)' },
+                                    }}
+                                />
+                            ))}
+                        </Box>
+                        <Button
+                            variant="contained"
+                            size="small"
+                            onClick={handleAdd}
+                            disabled={!canAdd}
+                            startIcon={<AddIcon />}
+                            sx={{
+                                background: 'linear-gradient(135deg, #3B82F6, #2563EB)',
+                                '&:hover': { background: 'linear-gradient(135deg, #60A5FA, #3B82F6)' },
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                borderRadius: 2,
+                            }}
+                        >
+                            Add
+                        </Button>
                     </Box>
-                    <Button
-                        variant="contained"
-                        size="small"
-                        onClick={handleAdd}
-                        disabled={!canAdd}
-                        startIcon={<AddIcon />}
-                        sx={{
-                            background: 'linear-gradient(135deg, #3B82F6, #2563EB)',
-                            '&:hover': { background: 'linear-gradient(135deg, #60A5FA, #3B82F6)' },
-                            textTransform: 'none',
-                            fontWeight: 600,
-                            borderRadius: 2,
-                        }}
-                    >
-                        Add
-                    </Button>
                 </Box>
-            </Box>
+            )}
 
             {/* Event list */}
             {events.length === 0 ? (
@@ -257,17 +260,19 @@ const EventsTab: React.FC<EventsTabProps> = ({ events, onChange }) => {
                                     flexShrink: 0,
                                 }}
                             />
-                            <IconButton
-                                size="small"
-                                onClick={() => handleRemove(event.id)}
-                                sx={{
-                                    color: 'text.secondary',
-                                    '&:hover': { color: 'error.main' },
-                                    flexShrink: 0,
-                                }}
-                            >
-                                <DeleteOutlineIcon fontSize="small" />
-                            </IconButton>
+                            {!readOnly && (
+                                <IconButton
+                                    size="small"
+                                    onClick={() => handleRemove(event.id)}
+                                    sx={{
+                                        color: 'text.secondary',
+                                        '&:hover': { color: 'error.main' },
+                                        flexShrink: 0,
+                                    }}
+                                >
+                                    <DeleteOutlineIcon fontSize="small" />
+                                </IconButton>
+                            )}
                         </Box>
                     ))}
                 </Box>
