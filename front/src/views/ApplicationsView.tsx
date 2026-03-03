@@ -1,4 +1,4 @@
-import { useReducer, useMemo } from 'react';
+import { useReducer, useMemo, useCallback } from 'react';
 import {
     Typography,
     Container,
@@ -8,10 +8,15 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 
 import { useApplications } from '../hooks/useApplications';
+import { useUniversities } from '../hooks/useUniversities';
 import { useSharedApplications } from '../hooks/useSharedApplications';
 import type { ApplicationFormData } from '../types/application';
+import type { UniversityFormData } from '../types/university';
+import { EMPTY_UNIVERSITY_FORM_DATA } from '../types/university';
 import ApplicationFormDialog from '../components/ApplicationFormDialog';
 import ApplicationDetailsDialog from '../components/ApplicationDetailsDialog';
+import UniversityDetailsDialog from '../components/UniversityDetailsDialog';
+import UniversityFormDialog from '../components/UniversityFormDialog';
 import ConfirmDeleteDialog from '../components/ConfirmDeleteDialog';
 import EmptyState from '../components/EmptyState';
 import { useSnackbar } from '../hooks/useSnackbar';
@@ -29,7 +34,15 @@ export default function ApplicationsView() {
         createApplication,
         updateApplication,
         deleteApplication,
+        refresh: refreshApplications,
     } = useApplications();
+
+    const {
+        universities,
+        loading: uniLoading,
+        createUniversity,
+        updateUniversity,
+    } = useUniversities();
 
     const { sharedGroups, loading: sharedLoading } = useSharedApplications();
 
@@ -44,14 +57,46 @@ export default function ApplicationsView() {
     // Snackbar state
     const { showSnackbar, SnackbarComponent } = useSnackbar();
 
+    // Auto-create university if needed, returns university ID
+    const ensureUniversity = useCallback(async (data: ApplicationFormData): Promise<string | undefined> => {
+        // If already linked to an existing university, keep it
+        if (data.universityId) return data.universityId;
+
+        // If university name is empty, no linking
+        if (!data.university.trim()) return undefined;
+
+        // Check if a university with same name already exists
+        const existing = universities.find(
+            (u) => u.name.toLowerCase() === data.university.trim().toLowerCase(),
+        );
+        if (existing) return existing._id;
+
+        // Create a new university
+        try {
+            const newUni = await createUniversity({
+                ...EMPTY_UNIVERSITY_FORM_DATA,
+                name: data.university.trim(),
+                country: data.country || '',
+            });
+            return newUni._id;
+        } catch {
+            // If university creation fails, still save the application without linking
+            console.error('Failed to auto-create university');
+            return undefined;
+        }
+    }, [universities, createUniversity]);
+
     // Handlers
     const handleSave = async (data: ApplicationFormData) => {
         try {
+            const universityId = await ensureUniversity(data);
+            const enrichedData = { ...data, universityId };
+
             if (state.editingApp) {
-                await updateApplication(state.editingApp._id, data);
+                await updateApplication(state.editingApp._id, enrichedData);
                 showSnackbar('Application updated successfully');
             } else {
-                await createApplication(data);
+                await createApplication(enrichedData);
                 showSnackbar('Application created successfully');
             }
         } catch {
@@ -64,6 +109,28 @@ export default function ApplicationsView() {
         try {
             await updateApplication(id, data);
             showSnackbar('Details updated successfully');
+        } catch {
+            showSnackbar('Something went wrong', 'error');
+            throw new Error('Save failed');
+        }
+    };
+
+    const handleUniDetailsSave = async (id: string, data: Partial<UniversityFormData>) => {
+        try {
+            await updateUniversity(id, data);
+            showSnackbar('University details updated');
+        } catch {
+            showSnackbar('Something went wrong', 'error');
+            throw new Error('Save failed');
+        }
+    };
+
+    const handleEditUniSave = async (id: string, data: Partial<UniversityFormData>) => {
+        try {
+            await updateUniversity(id, data);
+            // Refresh applications to reflect cascaded name/country changes
+            await refreshApplications();
+            showSnackbar('University updated successfully');
         } catch {
             showSnackbar('Something went wrong', 'error');
             throw new Error('Save failed');
@@ -122,20 +189,25 @@ export default function ApplicationsView() {
             });
     }, [applications, state.searchQuery, state.statusFilter, state.sortOption]);
 
+    const isLoading = loading || uniLoading;
+
     return (
         <>
             <Container maxWidth="lg" sx={{ flex: 1, py: 3, px: { xs: 2, sm: 3 } }}>
                 {/* Stats Bar */}
-                {!loading && applications.length > 0 && (
+                {!isLoading && applications.length > 0 && (
                     <Box sx={{ mb: 2 }}>
                         <Typography variant="body2" color="text.secondary">
                             <strong>{applications.length}</strong> application{applications.length !== 1 ? 's' : ''} tracked
+                            {universities.length > 0 && (
+                                <> across <strong>{universities.length}</strong> universit{universities.length !== 1 ? 'ies' : 'y'}</>
+                            )}
                         </Typography>
                     </Box>
                 )}
 
                 {/* Search and Filter */}
-                {(loading || applications.length > 0) && (
+                {(isLoading || applications.length > 0) && (
                     <ApplicationsFilterBar
                         searchQuery={state.searchQuery}
                         onSearchChange={(val) => dispatch({ type: 'SET_SEARCH_QUERY', payload: val })}
@@ -143,12 +215,12 @@ export default function ApplicationsView() {
                         onStatusChange={(val) => dispatch({ type: 'SET_STATUS_FILTER', payload: val })}
                         sortOption={state.sortOption}
                         onSortChange={(val) => dispatch({ type: 'SET_SORT_OPTION', payload: val })}
-                        disabled={loading}
+                        disabled={isLoading}
                     />
                 )}
 
                 {/* Content */}
-                {loading ? (
+                {isLoading ? (
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                         <ApplicationCardSkeleton count={2} />
                     </Box>
@@ -166,9 +238,12 @@ export default function ApplicationsView() {
                 ) : (
                     <ApplicationGrid
                         applications={filteredApplications}
+                        universities={universities}
                         onEdit={(app) => dispatch({ type: 'OPEN_EDIT', payload: app })}
                         onDelete={handleDeleteRequest}
                         onOpenDetails={(app) => dispatch({ type: 'OPEN_DETAILS', payload: app, readOnly: false })}
+                        onOpenUniDetails={(uni) => dispatch({ type: 'OPEN_UNI_DETAILS', payload: uni })}
+                        onEditUni={(uni) => dispatch({ type: 'OPEN_EDIT_UNI', payload: uni })}
                     />
                 )}
 
@@ -205,6 +280,7 @@ export default function ApplicationsView() {
                 open={state.formOpen}
                 application={state.editingApp}
                 existingUniversities={existingUniversities}
+                universities={universities}
                 onClose={() => dispatch({ type: 'CLOSE_FORM' })}
                 onSave={handleSave}
             />
@@ -218,6 +294,14 @@ export default function ApplicationsView() {
                 readOnly={state.detailsReadOnly}
             />
 
+            {/* University Details Dialog */}
+            <UniversityDetailsDialog
+                open={state.uniDetailsTarget !== null}
+                university={state.uniDetailsTarget}
+                onClose={() => dispatch({ type: 'CLOSE_UNI_DETAILS' })}
+                onSave={handleUniDetailsSave}
+            />
+
             {/* Delete Confirmation */}
             <ConfirmDeleteDialog
                 open={state.deleteTarget !== null}
@@ -225,6 +309,16 @@ export default function ApplicationsView() {
                 onClose={() => dispatch({ type: 'CLOSE_DELETE_REQUEST' })}
                 onConfirm={handleConfirmDelete}
             />
+
+            {/* University Edit Dialog */}
+            {state.editingUni && (
+                <UniversityFormDialog
+                    open={state.editingUni !== null}
+                    university={state.editingUni}
+                    onClose={() => dispatch({ type: 'CLOSE_EDIT_UNI' })}
+                    onSave={handleEditUniSave}
+                />
+            )}
 
             {/* Snackbar */}
             {SnackbarComponent}

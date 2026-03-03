@@ -27,12 +27,19 @@ import {
     type ApplicationFormData,
     type ApplicationLink,
 } from '../types/application';
-import { COUNTRIES, type Country } from '../data/countries';
+import type { University } from '../types/university';
+
+interface UniversityOption {
+    _id: string;
+    name: string;
+    country: string;
+}
 
 interface ApplicationFormDialogProps {
     open: boolean;
     application: Application | null; // null = create mode
     existingUniversities: string[];
+    universities: University[];
     onClose: () => void;
     onSave: (data: ApplicationFormData) => Promise<void>;
 }
@@ -41,6 +48,7 @@ const ApplicationFormDialog: React.FC<ApplicationFormDialogProps> = ({
     open,
     application,
     existingUniversities,
+    universities,
     onClose,
     onSave,
 }) => {
@@ -55,11 +63,18 @@ const ApplicationFormDialog: React.FC<ApplicationFormDialogProps> = ({
 
     const isEditing = application !== null;
 
-    const selectedCountry = useMemo(
-        () => COUNTRIES.find((c) => c.code === formData.country) ?? null,
-        [formData.country],
-    );
-
+    // Build university options for autocomplete
+    const universityOptions: UniversityOption[] = useMemo(() => {
+        const uniOpts = universities.map((u) => ({ _id: u._id, name: u.name, country: u.country }));
+        // Also add university names from applications that don't have a document yet
+        const existingNames = new Set(uniOpts.map((u) => u.name.toLowerCase()));
+        existingUniversities.forEach((name) => {
+            if (!existingNames.has(name.toLowerCase())) {
+                uniOpts.push({ _id: '', name, country: '' });
+            }
+        });
+        return uniOpts;
+    }, [universities, existingUniversities]);
     useEffect(() => {
         if (open) {
             if (application) {
@@ -90,6 +105,7 @@ const ApplicationFormDialog: React.FC<ApplicationFormDialogProps> = ({
                 setFormData({
                     title: application.title,
                     description: application.description,
+                    universityId: application.universityId,
                     university: application.university,
                     country: countryValue,
                     duration: parsedDuration,
@@ -218,13 +234,41 @@ const ApplicationFormDialog: React.FC<ApplicationFormDialogProps> = ({
                     required
                 />
 
-                {/* University – Autocomplete with freeSolo */}
+                {/* University – Autocomplete with freeSolo, linking to university documents */}
                 <Autocomplete
                     freeSolo
-                    options={existingUniversities}
-                    value={formData.university}
+                    options={universityOptions}
+                    getOptionLabel={(option) =>
+                        typeof option === 'string' ? option : option.name
+                    }
+                    value={
+                        universityOptions.find((u) => u._id && u._id === formData.universityId)
+                        ?? (formData.university || null)
+                    }
                     onChange={(_e, newValue) => {
-                        setFormData((prev) => ({ ...prev, university: newValue ?? '' }));
+                        if (newValue === null) {
+                            setFormData((prev) => ({ ...prev, university: '', universityId: undefined }));
+                        } else if (typeof newValue === 'string') {
+                            // Free-typed value
+                            const existing = universityOptions.find(
+                                (u) => u.name.toLowerCase() === newValue.toLowerCase() && u._id,
+                            );
+                            setFormData((prev) => ({
+                                ...prev,
+                                university: newValue,
+                                universityId: existing?._id || undefined,
+                                // Auto-fill country from university if empty
+                                country: existing?.country || '',
+                            }));
+                        } else {
+                            // Selected from dropdown
+                            setFormData((prev) => ({
+                                ...prev,
+                                university: newValue.name,
+                                universityId: newValue._id || undefined,
+                                country: newValue.country || '',
+                            }));
+                        }
                         if (errors.university) {
                             setErrors((prev) => ({ ...prev, university: undefined }));
                         }
@@ -235,68 +279,34 @@ const ApplicationFormDialog: React.FC<ApplicationFormDialogProps> = ({
                             setErrors((prev) => ({ ...prev, university: undefined }));
                         }
                     }}
+                    isOptionEqualToValue={(option, value) => {
+                        if (typeof value === 'string') return option.name === value;
+                        return option._id === value._id;
+                    }}
                     renderInput={(params) => (
                         <TextField
                             {...params}
                             label="University"
                             error={Boolean(errors.university)}
-                            helperText={errors.university}
+                            helperText={errors.university || (formData.universityId ? 'Linked to university group' : 'New university — will be created automatically')}
                             placeholder='e.g., "MIT"'
                             required
                         />
                     )}
                 />
 
-                {/* Country & Duration row */}
-                <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
-                    {/* Country – Autocomplete dropdown with flags */}
-                    <Autocomplete
-                        options={COUNTRIES}
-                        value={selectedCountry}
-                        onChange={(_e, newValue: Country | null) => {
-                            setFormData((prev) => ({ ...prev, country: newValue?.code ?? '' }));
-                        }}
-                        getOptionLabel={(option) => option.name}
-                        renderOption={(props, option) => {
-                            const { key, ...rest } = props;
-                            return (
-                                <Box
-                                    component="li"
-                                    key={key}
-                                    {...rest}
-                                    sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}
-                                >
-                                    <Typography component="span" sx={{ fontSize: '1.3rem', lineHeight: 1 }}>
-                                        {option.flag}
-                                    </Typography>
-                                    <Typography variant="body2">{option.name}</Typography>
-                                </Box>
-                            );
-                        }}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Country"
-                                placeholder="Select a country"
-                            />
-                        )}
-                        sx={{ flex: 1 }}
-                        isOptionEqualToValue={(option, value) => option.code === value.code}
-                    />
-
-                    {/* Duration – numeric, in years */}
-                    <TextField
-                        label="Duration (years)"
-                        type="number"
-                        value={formData.duration ?? ''}
-                        onChange={handleDurationChange}
-                        placeholder="e.g., 2"
-                        slotProps={{
-                            htmlInput: { min: 0, step: 1 },
-                        }}
-                        sx={{ flex: 1, minWidth: 140 }}
-                    />
-                </Box>
+                {/* Duration – numeric, in years */}
+                <TextField
+                    label="Duration (years)"
+                    type="number"
+                    value={formData.duration ?? ''}
+                    onChange={handleDurationChange}
+                    placeholder="e.g., 2"
+                    slotProps={{
+                        htmlInput: { min: 0, step: 1 },
+                    }}
+                    sx={{ width: '100%' }}
+                />
 
                 {/* Status */}
                 <TextField

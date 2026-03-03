@@ -57,6 +57,7 @@ exports.create = async (req, res) => {
             userId: req.user.uid,
             title: data.title || '',
             description: data.description || '',
+            universityId: data.universityId || null,
             university: data.university || '',
             country: data.country || '',
             duration: data.duration || null,

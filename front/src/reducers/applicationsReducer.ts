@@ -1,4 +1,5 @@
 import type { Application } from '../types/application';
+import type { University } from '../types/university';
 
 type ViewState = {
     formOpen: boolean;
@@ -6,6 +7,8 @@ type ViewState = {
     deleteTarget: Application | null;
     detailsApp: Application | null;
     detailsReadOnly: boolean;
+    uniDetailsTarget: University | null;
+    editingUni: University | null;
     searchQuery: string;
     statusFilter: string;
     sortOption: string;
@@ -17,6 +20,10 @@ type ViewAction =
     | { type: 'CLOSE_FORM' }
     | { type: 'OPEN_DETAILS'; payload: Application; readOnly?: boolean }
     | { type: 'CLOSE_DETAILS' }
+    | { type: 'OPEN_UNI_DETAILS'; payload: University }
+    | { type: 'CLOSE_UNI_DETAILS' }
+    | { type: 'OPEN_EDIT_UNI'; payload: University }
+    | { type: 'CLOSE_EDIT_UNI' }
     | { type: 'OPEN_DELETE_REQUEST'; payload: Application }
     | { type: 'CLOSE_DELETE_REQUEST' }
     | { type: 'SET_SEARCH_QUERY'; payload: string }
@@ -29,6 +36,8 @@ export const initialViewState: ViewState = {
     deleteTarget: null,
     detailsApp: null,
     detailsReadOnly: false,
+    uniDetailsTarget: null,
+    editingUni: null,
     searchQuery: '',
     statusFilter: 'All',
     sortOption: 'newest',
@@ -46,6 +55,14 @@ export function viewReducer(state: ViewState, action: ViewAction): ViewState {
             return { ...state, detailsApp: action.payload, detailsReadOnly: action.readOnly ?? false };
         case 'CLOSE_DETAILS':
             return { ...state, detailsApp: null, detailsReadOnly: false };
+        case 'OPEN_UNI_DETAILS':
+            return { ...state, uniDetailsTarget: action.payload };
+        case 'CLOSE_UNI_DETAILS':
+            return { ...state, uniDetailsTarget: null };
+        case 'OPEN_EDIT_UNI':
+            return { ...state, editingUni: action.payload };
+        case 'CLOSE_EDIT_UNI':
+            return { ...state, editingUni: null };
         case 'OPEN_DELETE_REQUEST':
             return { ...state, deleteTarget: action.payload };
         case 'CLOSE_DELETE_REQUEST':

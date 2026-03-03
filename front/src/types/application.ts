@@ -73,6 +73,7 @@ export interface Application {
     userId: string;
     title: string;
     description: string;
+    universityId?: string; // reference to university document
     university: string;
     country: string; // ISO country code
     duration: number | null; // in years
@@ -98,6 +99,7 @@ export const EMPTY_COSTS: ApplicationCosts = {
 export const EMPTY_FORM_DATA: ApplicationFormData = {
     title: '',
     description: '',
+    universityId: undefined,
     university: '',
     country: '',
     duration: null,

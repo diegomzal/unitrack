@@ -102,7 +102,9 @@ export default function SharedWithMeSection({
                             ) : (
                                 <ApplicationGrid
                                     applications={group.applications}
+                                    universities={[]}
                                     onOpenDetails={onOpenDetails}
+                                    onOpenUniDetails={() => { }}
                                     readOnly
                                 />
                             )}

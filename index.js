@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 3000;
 
 // Import routes
 const applicationRoutes = require('./routes/applications');
+const universityRoutes = require('./routes/universities');
 const userRoutes = require('./routes/users');
 const shareRoutes = require('./routes/shares');
 
@@ -23,6 +24,7 @@ app.get('/', (req, res) => {
 
 // All API routes require authentication
 app.use('/api/applications', authenticate, applicationRoutes);
+app.use('/api/universities', authenticate, universityRoutes);
 app.use('/api/users', authenticate, userRoutes);
 app.use('/api/shares', authenticate, shareRoutes);
 

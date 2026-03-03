@@ -19,6 +19,7 @@ import {
 } from 'date-fns';
 
 import { useApplications } from '../hooks/useApplications';
+import { useUniversities } from '../hooks/useUniversities';
 import { useSharedApplications } from '../hooks/useSharedApplications';
 import type { ApplicationEventType } from '../types/application';
 import { EVENT_TYPE_LABELS } from '../types/application';
@@ -33,6 +34,7 @@ export default function CalendarView() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const { applications } = useApplications();
+    const { universities } = useUniversities();
     const { sharedGroups } = useSharedApplications();
 
     const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -41,12 +43,27 @@ export default function CalendarView() {
     const [hiddenShareIds, setHiddenShareIds] = useState<string[]>([]);
     const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
 
-    // Flatten all events from all applications (own + shared), applying filters
+    // Flatten all events from all applications + universities (own + shared), applying filters
     const allCalendarEvents: CalendarEvent[] = useMemo(() => {
         const ownEvents: CalendarEvent[] = showMyEvents
-            ? applications.flatMap((app) =>
-                (app.events ?? []).map((event) => ({ event, application: app, isShared: false })),
-            )
+            ? [
+                // Application-level events
+                ...applications.flatMap((app) =>
+                    (app.events ?? []).map((event) => ({ event, application: app, isShared: false })),
+                ),
+                // University-level events
+                ...universities.flatMap((uni) =>
+                    (uni.events ?? []).map((event) => ({
+                        event,
+                        application: {
+                            _id: `uni-${uni._id}`,
+                            title: uni.name,
+                            university: uni.name,
+                        } as CalendarEvent['application'],
+                        isShared: false,
+                    })),
+                ),
+            ]
             : [];
 
         const sharedEvents: CalendarEvent[] = sharedGroups
@@ -63,7 +80,7 @@ export default function CalendarView() {
             );
 
         return [...ownEvents, ...sharedEvents];
-    }, [applications, sharedGroups, showMyEvents, hiddenShareIds]);
+    }, [applications, universities, sharedGroups, showMyEvents, hiddenShareIds]);
 
     // Calendar grid info
     const { weeks } = useMemo(() => {
