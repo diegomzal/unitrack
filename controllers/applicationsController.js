@@ -87,12 +87,22 @@ exports.update = async (req, res) => {
             return res.status(403).json({ error: "Not authorized to update this application" });
         }
 
-        const updates = req.body;
+        const data = req.body;
         const now = new Date().toISOString();
 
-        // Remove immutable fields
-        delete updates._id;
-        delete updates.userId;
+        // Whitelist allowed fields to prevent injection of malicious/extra fields (like createdAt override)
+        const allowedFields = [
+            'title', 'description', 'universityId', 'university', 'country',
+            'duration', 'links', 'events', 'requirements', 'requirementColumns',
+            'costs', 'notes', 'status'
+        ];
+
+        const updates = {};
+        for (const field of allowedFields) {
+            if (data[field] !== undefined) {
+                updates[field] = data[field];
+            }
+        }
 
         const updatedData = {
             ...updates,

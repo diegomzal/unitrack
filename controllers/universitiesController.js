@@ -79,11 +79,21 @@ exports.update = async (req, res) => {
             return res.status(403).json({ error: "Not authorized to update this university" });
         }
 
-        const updates = req.body;
+        const data = req.body;
         const now = new Date().toISOString();
 
-        delete updates._id;
-        delete updates.userId;
+        // Whitelist allowed fields to prevent injection
+        const allowedFields = [
+            'name', 'country', 'events', 'requirements',
+            'requirementColumns', 'costs', 'notes'
+        ];
+
+        const updates = {};
+        for (const field of allowedFields) {
+            if (data[field] !== undefined) {
+                updates[field] = data[field];
+            }
+        }
 
         const updatedData = {
             ...updates,
