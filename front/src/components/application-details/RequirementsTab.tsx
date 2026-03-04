@@ -18,7 +18,7 @@ import {
     type RequirementColumn,
 } from '../../types/application';
 
-import { generateId } from './EventsTab';
+import { generateId } from '../../utils/generateId';
 
 interface RequirementsTabProps {
     requirements: ApplicationRequirement[];

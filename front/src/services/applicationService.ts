@@ -1,22 +1,6 @@
-import { auth } from '../config/firebase';
+import { getAuthHeaders, API_URL } from './apiClient';
 import type { Application, ApplicationFormData } from '../types/application';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
-
-/**
- * Helper to get auth headers with the current user's ID token.
- */
-const getAuthHeaders = async (): Promise<HeadersInit> => {
-    const user = auth.currentUser;
-    if (!user) {
-        throw new Error('Not authenticated');
-    }
-    const token = await user.getIdToken();
-    return {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-    };
-};
 
 export const applicationService = {
     getAll: async (): Promise<Application[]> => {

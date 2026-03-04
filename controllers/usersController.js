@@ -6,10 +6,6 @@ const { db } = require('../config/firebase');
  * POST /api/users/me
  */
 exports.ensureProfile = async (req, res) => {
-    if (!db) {
-        return res.status(500).json({ error: 'Database not initialized' });
-    }
-
     try {
         const { uid, email, name, picture } = req.user;
         const userRef = db.collection('users').doc(uid);
@@ -53,10 +49,6 @@ exports.ensureProfile = async (req, res) => {
  * GET /api/users/search?email=query
  */
 exports.searchByEmail = async (req, res) => {
-    if (!db) {
-        return res.status(500).json({ error: 'Database not initialized' });
-    }
-
     try {
         const { email } = req.query;
         if (!email) {

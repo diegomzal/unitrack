@@ -192,7 +192,7 @@ const ApplicationFormDialog: React.FC<ApplicationFormDialogProps> = ({
         try {
             setSaving(true);
 
-            let finalFormData = { ...formData };
+            const finalFormData = { ...formData };
             const trimmedUrl = newLinkUrl.trim();
             if (trimmedUrl) {
                 let finalUrl = trimmedUrl;

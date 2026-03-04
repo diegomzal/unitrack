@@ -1,15 +1,6 @@
 const { db } = require('../config/firebase');
 
-// Utility to verify Database initialization
-const checkDb = (res) => {
-    if (!db) {
-        return res.status(500).json({ error: "Database not initialized. Missing credentials." });
-    }
-    return true;
-};
-
 exports.getAll = async (req, res) => {
-    if (!checkDb(res)) return;
     try {
         const snapshot = await db.collection('applications')
             .where('userId', '==', req.user.uid)
@@ -27,7 +18,6 @@ exports.getAll = async (req, res) => {
 };
 
 exports.getById = async (req, res) => {
-    if (!checkDb(res)) return;
     try {
         const { id } = req.params;
         const result = await db.collection('applications').doc(id).get();
@@ -49,7 +39,6 @@ exports.getById = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
-    if (!checkDb(res)) return;
     try {
         const data = req.body;
         const now = new Date().toISOString();
@@ -84,7 +73,6 @@ exports.create = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-    if (!checkDb(res)) return;
     try {
         const { id } = req.params;
         const docRef = db.collection('applications').doc(id);
@@ -122,7 +110,6 @@ exports.update = async (req, res) => {
 };
 
 exports.delete = async (req, res) => {
-    if (!checkDb(res)) return;
     try {
         const { id } = req.params;
         const docRef = db.collection('applications').doc(id);

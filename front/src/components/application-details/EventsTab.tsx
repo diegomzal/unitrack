@@ -25,9 +25,11 @@ import {
     type ApplicationEventType,
 } from '../../types/application';
 
-// Helper for generating IDs
-export const generateId = (): string =>
-    Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
+import { generateId } from '../../utils/generateId';
+
+/** Type-safe check for whether a color is one of the preset EVENT_COLORS */
+const isPresetColor = (c: string): boolean =>
+    (EVENT_COLORS as readonly string[]).includes(c);
 
 const getEventIcon = (type: ApplicationEventType, fontSize = 16) => {
     switch (type) {
@@ -181,11 +183,11 @@ const EventsTab: React.FC<EventsTabProps> = ({ events, onChange, readOnly }) => 
                                         borderRadius: '50%',
                                         position: 'relative',
                                         cursor: 'pointer',
-                                        bgcolor: !EVENT_COLORS.includes(color as any)
+                                        bgcolor: !isPresetColor(color)
                                             ? color
                                             : 'rgba(0,0,0,0.04)',
-                                        border: !EVENT_COLORS.includes(color as any) ? '2px solid #fff' : '2px dashed rgba(0,0,0,0.2)',
-                                        boxShadow: !EVENT_COLORS.includes(color as any) ? `0 0 0 1px ${color}` : 'none',
+                                        border: !isPresetColor(color) ? '2px solid #fff' : '2px dashed rgba(0,0,0,0.2)',
+                                        boxShadow: !isPresetColor(color) ? `0 0 0 1px ${color}` : 'none',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
@@ -194,14 +196,14 @@ const EventsTab: React.FC<EventsTabProps> = ({ events, onChange, readOnly }) => 
                                         '&:hover': { transform: 'scale(1.15)', borderColor: 'rgba(0,0,0,0.4)' },
                                     }}
                                 >
-                                    {EVENT_COLORS.includes(color as any) ? (
+                                    {isPresetColor(color) ? (
                                         <PaletteIcon sx={{ fontSize: 13, color: 'text.secondary', zIndex: 1 }} />
                                     ) : (
                                         <PaletteIcon sx={{ fontSize: 13, color: '#fff', opacity: 0.6, zIndex: 1, mixBlendMode: 'difference' }} />
                                     )}
                                     <input
                                         type="color"
-                                        value={EVENT_COLORS.includes(color as any) ? '#ffffff' : color}
+                                        value={isPresetColor(color) ? '#ffffff' : color}
                                         onChange={(e) => setColor(e.target.value)}
                                         style={{
                                             position: 'absolute',

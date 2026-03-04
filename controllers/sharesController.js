@@ -1,19 +1,11 @@
 const { db } = require('../config/firebase');
 
-const checkDb = (res) => {
-    if (!db) {
-        return res.status(500).json({ error: 'Database not initialized' });
-    }
-    return true;
-};
-
 /**
  * Get all shares where the current user is the owner.
  * Returns both pending and accepted shares so the owner can see invite status.
  * GET /api/shares
  */
 exports.getMyShares = async (req, res) => {
-    if (!checkDb(res)) return;
     try {
         const snapshot = await db.collection('shares')
             .where('ownerId', '==', req.user.uid)
@@ -36,7 +28,6 @@ exports.getMyShares = async (req, res) => {
  * GET /api/shares/with-me
  */
 exports.getSharedWithMe = async (req, res) => {
-    if (!checkDb(res)) return;
     try {
         const snapshot = await db.collection('shares')
             .where('sharedWithId', '==', req.user.uid)
@@ -59,7 +50,6 @@ exports.getSharedWithMe = async (req, res) => {
  * GET /api/shares/invitations
  */
 exports.getInvitations = async (req, res) => {
-    if (!checkDb(res)) return;
     try {
         const snapshot = await db.collection('shares')
             .where('sharedWithId', '==', req.user.uid)
@@ -83,7 +73,6 @@ exports.getInvitations = async (req, res) => {
  * Body: { sharedWithId, sharedWithEmail, sharedWithName, shareAll, applicationIds }
  */
 exports.createShare = async (req, res) => {
-    if (!checkDb(res)) return;
     try {
         const { sharedWithId, sharedWithEmail, sharedWithName, shareAll, applicationIds } = req.body;
 
@@ -136,7 +125,6 @@ exports.createShare = async (req, res) => {
  * Body: { action: 'accept' | 'reject' }
  */
 exports.respondToShare = async (req, res) => {
-    if (!checkDb(res)) return;
     try {
         const { id } = req.params;
         const { action } = req.body;
@@ -190,7 +178,6 @@ exports.respondToShare = async (req, res) => {
  * Body: { shareAll, applicationIds }
  */
 exports.updateShare = async (req, res) => {
-    if (!checkDb(res)) return;
     try {
         const { id } = req.params;
         const docRef = db.collection('shares').doc(id);
@@ -229,7 +216,6 @@ exports.updateShare = async (req, res) => {
  * DELETE /api/shares/:id
  */
 exports.deleteShare = async (req, res) => {
-    if (!checkDb(res)) return;
     try {
         const { id } = req.params;
         const docRef = db.collection('shares').doc(id);
@@ -263,7 +249,6 @@ exports.deleteShare = async (req, res) => {
  * GET /api/shares/:id/applications
  */
 exports.getSharedApplications = async (req, res) => {
-    if (!checkDb(res)) return;
     try {
         const { id } = req.params;
         const shareDoc = await db.collection('shares').doc(id).get();

@@ -27,5 +27,5 @@ dist-ssr
 .env
 config/serviceAccountKey.json
 
-.agents
+.agent
 db-backup-*.json

@@ -1,19 +1,6 @@
-import { auth } from '../config/firebase';
+import { getAuthHeaders, API_URL } from './apiClient';
 import type { University, UniversityFormData } from '../types/university';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
-
-const getAuthHeaders = async (): Promise<HeadersInit> => {
-    const user = auth.currentUser;
-    if (!user) {
-        throw new Error('Not authenticated');
-    }
-    const token = await user.getIdToken();
-    return {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-    };
-};
 
 export const universityService = {
     getAll: async (): Promise<University[]> => {
