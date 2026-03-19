@@ -26,7 +26,7 @@ describe('useCurrencyRates hook', () => {
     });
 
     it('fetches and returns the rate for a valid currency', async () => {
-        global.fetch = vi.fn().mockResolvedValue({
+        globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
             json: async () => ({
                 rates: { USD: 1.1 },
@@ -48,7 +48,7 @@ describe('useCurrencyRates hook', () => {
     });
 
     it('handles fetch errors properly', async () => {
-        global.fetch = vi.fn().mockResolvedValue({
+        globalThis.fetch = vi.fn().mockResolvedValue({
             ok: false,
             status: 404,
         });
