@@ -1,11 +1,14 @@
 import React from 'react';
 import { Box, Typography, TextField, InputAdornment } from '@mui/material';
 import { type ApplicationCosts } from '../../types/application';
+import CurrencyConverter from './CurrencyConverter';
 
 interface CostsTabProps {
     costs: ApplicationCosts;
     onChange: (costs: ApplicationCosts) => void;
     readOnly?: boolean;
+    /** ISO country code for auto-detecting currency */
+    countryCode?: string;
 }
 
 const formatCurrency = (value: number | null): string => {
@@ -18,7 +21,7 @@ const formatCurrency = (value: number | null): string => {
     }).format(value);
 };
 
-const CostsTab: React.FC<CostsTabProps> = ({ costs, onChange, readOnly }) => {
+const CostsTab: React.FC<CostsTabProps> = ({ costs, onChange, readOnly, countryCode }) => {
     const tuition = costs.tuitionFeePerYear ?? 0;
     const living = costs.livingCostPerYear ?? 0;
     const totalAnnual = tuition + living;
@@ -132,6 +135,14 @@ const CostsTab: React.FC<CostsTabProps> = ({ costs, onChange, readOnly }) => {
                     input: { readOnly },
                 }}
             />
+
+            {/* Currency Converter */}
+            {countryCode && (
+                <CurrencyConverter
+                    countryCode={countryCode}
+                    totalAnnualUsd={totalAnnual}
+                />
+            )}
         </Box>
     );
 };

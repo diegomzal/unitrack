@@ -252,7 +252,7 @@ const ApplicationDetailsDialog: React.FC<ApplicationDetailsDialogProps> = ({
                     <RequirementsTab requirements={requirements} columns={requirementColumns} onChange={handleRequirementsChange} readOnly={readOnly} />
                 )}
                 {tab === 2 && (
-                    <CostsTab costs={costs} onChange={handleCostsChange} readOnly={readOnly} />
+                    <CostsTab costs={costs} onChange={handleCostsChange} readOnly={readOnly} countryCode={application.country} />
                 )}
             </DialogContent>
 

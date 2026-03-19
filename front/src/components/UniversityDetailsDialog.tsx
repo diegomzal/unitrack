@@ -250,7 +250,7 @@ const UniversityDetailsDialog: React.FC<UniversityDetailsDialogProps> = ({
                     <RequirementsTab requirements={requirements} columns={requirementColumns} onChange={handleRequirementsChange} readOnly={readOnly} />
                 )}
                 {tab === 2 && (
-                    <CostsTab costs={costs} onChange={handleCostsChange} />
+                    <CostsTab costs={costs} onChange={handleCostsChange} countryCode={university.country} />
                 )}
             </DialogContent>
 

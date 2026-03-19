@@ -28,6 +28,7 @@ import {
     type ApplicationLink,
 } from '../types/application';
 import type { University } from '../types/university';
+import { COUNTRIES, type Country } from '../data/countries';
 
 interface UniversityOption {
     _id: string;
@@ -306,6 +307,45 @@ const ApplicationFormDialog: React.FC<ApplicationFormDialogProps> = ({
                             required
                         />
                     )}
+                />
+
+                {/* Country */}
+                <Autocomplete
+                    options={COUNTRIES}
+                    value={COUNTRIES.find((c) => c.code === formData.country) ?? null}
+                    onChange={(_e, newValue: Country | null) => {
+                        setFormData((prev) => ({ ...prev, country: newValue?.code ?? '' }));
+                    }}
+                    getOptionLabel={(option) => option.name}
+                    renderOption={(props, option) => {
+                        const { key, ...rest } = props;
+                        return (
+                            <Box
+                                component="li"
+                                key={key}
+                                {...rest}
+                                sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}
+                            >
+                                <Typography component="span" sx={{ fontSize: '1.3rem', lineHeight: 1 }}>
+                                    {option.flag}
+                                </Typography>
+                                <Typography variant="body2">{option.name}</Typography>
+                            </Box>
+                        );
+                    }}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Country"
+                            placeholder="Select a country..."
+                            helperText={
+                                formData.universityId
+                                    ? 'Pre-filled from existing university, but you can change it for this specific program'
+                                    : 'Country for this program and university'
+                            }
+                        />
+                    )}
+                    isOptionEqualToValue={(option, value) => option.code === value.code}
                 />
 
                 {/* Duration – numeric, in years */}
