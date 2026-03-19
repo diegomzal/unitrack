@@ -6,6 +6,7 @@ import {
     Paper,
     CircularProgress,
     Alert,
+    useTheme,
 } from '@mui/material';
 import SchoolIcon from '@mui/icons-material/School';
 import GoogleIcon from '@mui/icons-material/Google';
@@ -13,6 +14,8 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function LoginView() {
     const { signInWithGoogle } = useAuth();
+    const theme = useTheme();
+    const isDark = theme.palette.mode === 'dark';
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -39,7 +42,9 @@ export default function LoginView() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)',
+                background: isDark
+                    ? 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)'
+                    : 'linear-gradient(135deg, #E8F0FE 0%, #F4F6FB 50%, #E8F0FE 100%)',
                 p: 2,
             }}
         >
@@ -51,9 +56,14 @@ export default function LoginView() {
                     p: { xs: 3, sm: 5 },
                     borderRadius: 4,
                     textAlign: 'center',
-                    bgcolor: 'rgba(30, 41, 59, 0.8)',
+                    bgcolor: isDark ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 0.85)',
                     backdropFilter: 'blur(20px)',
-                    border: '1px solid rgba(148, 163, 184, 0.1)',
+                    border: isDark
+                        ? '1px solid rgba(148, 163, 184, 0.1)'
+                        : '1px solid rgba(59, 130, 246, 0.12)',
+                    boxShadow: isDark
+                        ? 'none'
+                        : '0 8px 32px rgba(0, 0, 0, 0.08)',
                 }}
             >
                 {/* Logo */}

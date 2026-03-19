@@ -1,17 +1,21 @@
 import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Box, Tabs, Tab, Avatar, Tooltip, Menu, MenuItem, ListItemIcon, ListItemText, Divider } from '@mui/material';
+import { AppBar, Toolbar, Typography, Box, Tabs, Tab, Avatar, Tooltip, Menu, MenuItem, ListItemIcon, ListItemText, Divider, IconButton } from '@mui/material';
 import SchoolIcon from '@mui/icons-material/School';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ChecklistIcon from '@mui/icons-material/Checklist';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
 import { useAuth } from '../contexts/AuthContext';
+import { useThemeMode } from '../contexts/ThemeContext';
 
 export default function MainLayout() {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, signOut } = useAuth();
+    const { mode, toggleTheme } = useThemeMode();
 
     const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
 
@@ -38,8 +42,9 @@ export default function MainLayout() {
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <AppBar position="sticky" sx={{ bgcolor: 'background.paper', color: 'text.primary', borderBottom: 1, borderColor: 'divider', boxShadow: 'none' }}>
-                <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 1, sm: 2 } }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Toolbar sx={{ px: { xs: 1, sm: 2 } }}>
+                    {/* Left: Logo */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 'fit-content' }}>
                         <SchoolIcon sx={{ mr: 1.5, color: 'primary.main' }} />
                         <Typography
                             variant="h6"
@@ -54,58 +59,80 @@ export default function MainLayout() {
                             UniTrack
                         </Typography>
                     </Box>
-                    <Tabs
-                        value={currentTab}
-                        onChange={handleTabChange}
-                        textColor="primary"
-                        indicatorColor="primary"
-                        variant="scrollable"
-                        scrollButtons="auto"
-                        allowScrollButtonsMobile
-                        sx={{ minHeight: { xs: 56, sm: 64 }, '.MuiTab-root': { minHeight: { xs: 56, sm: 64 } } }}
-                    >
-                        <Tab
-                            key="applications"
-                            icon={<ChecklistIcon />}
-                            iconPosition="start"
-                            label="Applications"
-                            value="/applications"
-                            sx={{ textTransform: 'none', fontWeight: 600 }}
-                        />
 
-                        <Tab
-                            key="calendar"
-                            icon={<CalendarMonthIcon />}
-                            iconPosition="start"
-                            label="Calendar"
-                            value="/calendar"
-                            sx={{ textTransform: 'none', fontWeight: 600 }}
-                        />
-                        <Tab
-                            key="settings"
-                            icon={<SettingsIcon />}
-                            iconPosition="start"
-                            label="Settings"
-                            value="/settings"
-                            sx={{ textTransform: 'none', fontWeight: 600 }}
-                        />
-                    </Tabs>
-                    <Tooltip title={user?.email || ''}>
-                        <Avatar
-                            src={user?.photoURL || undefined}
-                            sx={{
-                                width: 32,
-                                height: 32,
-                                ml: 1,
-                                cursor: 'pointer',
-                                border: '2px solid',
-                                borderColor: 'primary.main',
-                            }}
-                            onClick={handleOpenUserMenu}
+                    {/* Center: Tabs */}
+                    <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+                        <Tabs
+                            value={currentTab}
+                            onChange={handleTabChange}
+                            textColor="primary"
+                            indicatorColor="primary"
+                            variant="scrollable"
+                            scrollButtons="auto"
+                            allowScrollButtonsMobile
+                            sx={{ minHeight: { xs: 56, sm: 64 }, '.MuiTab-root': { minHeight: { xs: 56, sm: 64 } } }}
                         >
-                            {user?.displayName?.charAt(0) || user?.email?.charAt(0) || '?'}
-                        </Avatar>
-                    </Tooltip>
+                            <Tab
+                                key="applications"
+                                icon={<ChecklistIcon />}
+                                iconPosition="start"
+                                label="Applications"
+                                value="/applications"
+                                sx={{ textTransform: 'none', fontWeight: 600 }}
+                            />
+                            <Tab
+                                key="calendar"
+                                icon={<CalendarMonthIcon />}
+                                iconPosition="start"
+                                label="Calendar"
+                                value="/calendar"
+                                sx={{ textTransform: 'none', fontWeight: 600 }}
+                            />
+                            <Tab
+                                key="settings"
+                                icon={<SettingsIcon />}
+                                iconPosition="start"
+                                label="Settings"
+                                value="/settings"
+                                sx={{ textTransform: 'none', fontWeight: 600 }}
+                            />
+                        </Tabs>
+                    </Box>
+
+                    {/* Right: Theme toggle + Avatar */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 'fit-content' }}>
+                        <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+                            <IconButton
+                                onClick={toggleTheme}
+                                size="small"
+                                sx={{
+                                    color: 'text.secondary',
+                                    transition: 'color 0.2s ease, transform 0.2s ease',
+                                    '&:hover': {
+                                        color: 'primary.main',
+                                        transform: 'rotate(30deg)',
+                                    },
+                                }}
+                            >
+                                {mode === 'dark' ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title={user?.email || ''}>
+                            <Avatar
+                                src={user?.photoURL || undefined}
+                                sx={{
+                                    width: 32,
+                                    height: 32,
+                                    cursor: 'pointer',
+                                    border: '2px solid',
+                                    borderColor: 'primary.main',
+                                }}
+                                onClick={handleOpenUserMenu}
+                            >
+                                {user?.displayName?.charAt(0) || user?.email?.charAt(0) || '?'}
+                            </Avatar>
+                        </Tooltip>
+                    </Box>
                     <Menu
                         sx={{ mt: '45px' }}
                         id="menu-appbar"
