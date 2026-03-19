@@ -1,12 +1,12 @@
 {
   "name": "unitrack",
   "version": "1.0.0",
-  "description": "UniTrack es una aplicación integral diseñada para que los estudiantes universitarios puedan organizar su vida académica. Permite realizar un seguimiento estructurado de materias, horarios, calificaciones, tareas y el progreso general en la carrera, facilitando la gestión del tiempo y la proyección académica.",
+  "description": "",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "cross-env NODE_ENV=test jest"
   },
   "repository": {
     "type": "git",
@@ -27,6 +27,15 @@
     "firebase-admin": "^13.6.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "cross-env": "^10.1.0",
+    "jest": "^30.3.0",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2"
+  },
+  "jest": {
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/front/"
+    ]
   }
 }

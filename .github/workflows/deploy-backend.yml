@@ -27,6 +27,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'package-lock.json'
+
+      - name: Install backend dependencies
+        run: npm ci
+
+      - name: Run Backend Tests
+        run: npm test
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
