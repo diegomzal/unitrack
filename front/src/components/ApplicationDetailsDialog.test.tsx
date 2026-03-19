@@ -24,7 +24,6 @@ describe('ApplicationDetailsDialog component', () => {
                 open={true}
                 application={mockApp}
                 onClose={() => {}}
-                onEdit={() => {}}
             />
         );
         expect(screen.getByText('BSc Computer Science')).toBeInTheDocument();
@@ -36,7 +35,6 @@ describe('ApplicationDetailsDialog component', () => {
                 open={false}
                 application={mockApp}
                 onClose={() => {}}
-                onEdit={() => {}}
             />
         );
         expect(screen.queryByText('BSc Computer Science')).not.toBeInTheDocument();

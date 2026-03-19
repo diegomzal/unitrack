@@ -19,15 +19,15 @@ describe('UniversityGroupCard component', () => {
         events: [],
         requirements: [],
         requirementColumns: [],
-        costs: { tuitionFeePerYear: 0, livingCostPerYear: 0, applicationFee: 0 },
+        costs: { tuitionFeePerYear: 0, livingCostPerYear: 0, scholarshipInfo: '' },
         notes: '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
-    };
+    } as unknown as University;
 
     const mockApps: Application[] = [
-        { _id: 'a1', title: 'App 1', universityId: 'u1', userId: 'u1', status: 'In progress', links: [], createdAt: '', updatedAt: '', university: 'Stanford University' },
-        { _id: 'a2', title: 'App 2', universityId: 'u1', userId: 'u1', status: 'In progress', links: [], createdAt: '', updatedAt: '', university: 'Stanford University' }
+        { _id: 'a1', title: 'App 1', universityId: 'u1', userId: 'u1', status: 'In progress', links: [], createdAt: '', updatedAt: '', university: 'Stanford University' } as any,
+        { _id: 'a2', title: 'App 2', universityId: 'u1', userId: 'u1', status: 'In progress', links: [], createdAt: '', updatedAt: '', university: 'Stanford University' } as any
     ];
 
     it('renders university details correctly', () => {

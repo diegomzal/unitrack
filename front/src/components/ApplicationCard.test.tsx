@@ -2,14 +2,14 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import ApplicationCard from './ApplicationCard';
-import type { Application } from '../types/application';
+
 
 vi.mock('./StatusChip', () => ({
     default: ({ status }: any) => <div data-testid="status-chip">{status}</div>
 }));
 
 describe('ApplicationCard component', () => {
-    const mockApp: Application = {
+    const mockApp = {
         _id: '123',
         userId: 'user1',
         title: 'BSc Computer Science',
@@ -18,7 +18,7 @@ describe('ApplicationCard component', () => {
         links: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
-    };
+    } as any;
 
     it('renders application details correctly', () => {
         render(

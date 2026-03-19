@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import UniversityDetailsDialog from './UniversityDetailsDialog';
 import type { University } from '../types/university';
-import type { Application } from '../types/application';
+
 
 vi.mock('../hooks/useCurrencyRates', () => ({
     useCurrencyRates: () => ({ rate: 1, loading: false })
